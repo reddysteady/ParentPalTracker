@@ -299,4 +299,44 @@ router.post('/api/email/forward', async (req, res) => {
   }
 });
 
+// SMS notification endpoint
+router.post('/api/sms/send', async (req, res) => {
+  try {
+    const { userId, message, phoneNumber } = req.body;
+    
+    if (!message || !phoneNumber) {
+      return res.status(400).json({ error: 'Missing required fields: message, phoneNumber' });
+    }
+
+    const { sendSMS } = await import('./sms-service');
+    const result = await sendSMS({
+      to: phoneNumber,
+      message: message
+    });
+
+    if (result.success) {
+      // Log the notification if userId provided
+      if (userId) {
+        await storage.createNotification({
+          userId: parseInt(userId),
+          type: 'sms',
+          message: message,
+          delivered: true,
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        messageId: result.messageId,
+        message: 'SMS sent successfully' 
+      });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    console.error('Error sending SMS:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

@@ -218,29 +218,57 @@
             </div>
         </div>
         
-        <!-- Email Processing -->
-        <div class="card">
-            <h2>📧 Process School Email</h2>
-            <form id="emailForm">
-                <div class="form-group">
-                    <label for="emailUserId">Your User ID</label>
-                    <input type="number" id="emailUserId" name="emailUserId" required>
-                </div>
-                <div class="form-group">
-                    <label for="emailSubject">Email Subject</label>
-                    <input type="text" id="emailSubject" name="emailSubject" placeholder="e.g., School Play Rehearsals This Week" required>
-                </div>
-                <div class="form-group">
-                    <label for="emailBody">Email Content</label>
-                    <textarea id="emailBody" name="emailBody" placeholder="Paste the school email content here..." required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="emailSender">Sender Email</label>
-                    <input type="email" id="emailSender" name="emailSender" placeholder="school@example.com" required>
-                </div>
-                <button type="submit">Process Email</button>
-            </form>
-            <div id="emailResult"></div>
+        <div class="grid">
+            <!-- Email Processing -->
+            <div class="card">
+                <h2>📧 Process School Email</h2>
+                <form id="emailForm">
+                    <div class="form-group">
+                        <label for="emailUserId">Your User ID</label>
+                        <input type="number" id="emailUserId" name="emailUserId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailSubject">Email Subject</label>
+                        <input type="text" id="emailSubject" name="emailSubject" placeholder="e.g., School Play Rehearsals This Week" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailBody">Email Content</label>
+                        <textarea id="emailBody" name="emailBody" placeholder="Paste the school email content here..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailSender">Sender Email</label>
+                        <input type="email" id="emailSender" name="emailSender" placeholder="school@example.com" required>
+                    </div>
+                    <button type="submit">Process Email</button>
+                </form>
+                <div id="emailResult"></div>
+            </div>
+
+            <!-- Email Forwarding (Realistic Flow) -->
+            <div class="card">
+                <h2>📬 Email Forwarding</h2>
+                <p style="color: #666; margin-bottom: 20px;">Simulate how emails would be automatically processed when forwarded to your custom address.</p>
+                <form id="forwardForm">
+                    <div class="form-group">
+                        <label for="forwardTo">Your Custom Email Address</label>
+                        <input type="email" id="forwardTo" name="forwardTo" placeholder="yourname@parentpal.app" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="forwardFrom">School Email</label>
+                        <input type="email" id="forwardFrom" name="forwardFrom" placeholder="school@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="forwardSubject">Email Subject</label>
+                        <input type="text" id="forwardSubject" name="forwardSubject" placeholder="Field Trip Permission Slips Due Friday" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="forwardBody">Email Content</label>
+                        <textarea id="forwardBody" name="forwardBody" placeholder="Dear Parents, Please return permission slips for the zoo field trip by Friday..." required></textarea>
+                    </div>
+                    <button type="submit">Simulate Email Forward</button>
+                </form>
+                <div id="forwardResult"></div>
+            </div>
         </div>
         
         <!-- Events Display -->
@@ -371,6 +399,45 @@
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Process Email';
+            }
+        });
+        
+        // Email forwarding simulation
+        document.getElementById('forwardForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing Forward...';
+            
+            const formData = new FormData(e.target);
+            const forwardData = {
+                to: formData.get('forwardTo'),
+                from: formData.get('forwardFrom'),
+                subject: formData.get('forwardSubject'),
+                body: formData.get('forwardBody')
+            };
+            
+            try {
+                const response = await fetch('/api/email/forward', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(forwardData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('forwardResult').innerHTML = 
+                        `<div class="success">✅ Email forwarded and processed! Found ${result.eventsCreated} events. Events will auto-notify based on your schedule.</div>`;
+                } else {
+                    throw new Error(result.error || 'Failed to process forwarded email');
+                }
+            } catch (error) {
+                document.getElementById('forwardResult').innerHTML = 
+                    `<div class="error">❌ Error: ${error.message}</div>`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Simulate Email Forward';
             }
         });
         
