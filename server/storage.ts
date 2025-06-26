@@ -15,9 +15,11 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUser(id: number): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   
   // Children
   createChild(child: InsertChild): Promise<Child>;
+  getChild(id: number): Promise<Child | undefined>;
   getChildrenByUserId(userId: number): Promise<Child[]>;
   
   // Parenting Schedule
@@ -68,12 +70,26 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users);
+  }
+
   // Children
   async createChild(childData: InsertChild): Promise<Child> {
     const [child] = await db
       .insert(children)
       .values(childData)
       .returning();
+    return child;
+  }
+
+  async getChild(id: number): Promise<Child | undefined> {
+    const [child] = await db
+      .select()
+      .from(children)
+      .where(eq(children.id, id));
     return child;
   }
 

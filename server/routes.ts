@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { storage } from './storage';
 import { extractEventsFromEmail, generateNotificationMessage } from './nlp';
+import { createEmailWebhookHandler, EmailPollingService } from './email-service';
 import { 
   insertUserSchema, 
   insertChildSchema, 
@@ -256,6 +257,44 @@ router.get('/api/users/:userId/notifications', async (req, res) => {
     res.json(notifications);
   } catch (error) {
     console.error('Error getting notifications:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Email webhook endpoint for real-time email ingestion
+router.post('/api/webhook/email', createEmailWebhookHandler());
+
+// Manual email forwarding endpoint (for testing)
+router.post('/api/email/forward', async (req, res) => {
+  try {
+    const { to, from, subject, body } = req.body;
+    
+    if (!to || !from || !subject || !body) {
+      return res.status(400).json({ error: 'Missing required fields: to, from, subject, body' });
+    }
+
+    const incomingEmail = {
+      to,
+      from,
+      subject,
+      body,
+      receivedAt: new Date()
+    };
+
+    const { processIncomingEmail } = await import('./email-service');
+    const result = await processIncomingEmail(incomingEmail);
+
+    if (result.success) {
+      res.json({
+        message: 'Email processed successfully',
+        eventsCreated: result.eventsCreated,
+        events: result.events
+      });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    console.error('Error in email forwarding:', error);
     res.status(500).json({ error: error.message });
   }
 });
