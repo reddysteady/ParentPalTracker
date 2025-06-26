@@ -1,0 +1,72 @@
+Product Spec: ParentPal (MVP)
+
+Goal:Help parents stay on top of events, changes, and responsibilities related to their children by extracting relevant info from school emails and aligning it with their custody schedule.
+
+MVP Features
+
+1. Email IngestionEach user receives a custom forwarding email address (e.g., ed@parentpal.app). Parents forward school emails to this address. The app polls for new messages frequently and ingests their content.
+
+2. Event Extraction (NLP Lite)The app parses emails to identify:
+
+Event name and description
+
+Date and time
+
+Required preparation (e.g., costumes, field trip forms, money)
+
+Cancellations or changes
+
+A lightweight NLP model or rule-based parser will structure this information.
+
+3. Parenting Schedule InputUsers upload their parenting schedule via a Word table or paste it into a form. The app maps this schedule to an internal calendar, identifying which parent is responsible on each day.
+
+4. Smart NotificationsNotifications are generated based on event timing and which parent is responsible. Examples:
+
+"Hazel’s dress-up day is Thursday (your drop-off) – prep outfit tonight."
+
+"Layla’s pizza day canceled tomorrow (your day) – adjust lunch."
+
+5. Daily BriefingDaily summary sent each morning via email:
+
+"Today: Hazel’s library day (return books), Layla’s early dismissal (pick-up at 1:30)."
+
+6. Real-Time Alerts (SMS)For time-sensitive items, users can opt in to receive SMS notifications. Example:
+
+"Reminder: Hazel needs her costume for drama day tomorrow."
+
+7. Mobile Web Interface (V1)A lightweight mobile-friendly view showing:
+
+Timeline of upcoming events filtered to the user's parenting days
+
+Ability to mark events as done or add notes
+
+Roadmap Features
+
+1. Editable Parenting Calendar (Chart Style)Color-coded weekly chart interface to view and edit custody days. Example:
+
+Day
+
+Parent
+
+Monday
+
+You
+
+Tuesday
+
+Darien
+
+Wednesday
+
+You
+
+Tap to switch the assigned parent for one-off changes or updates.
+
+2. Shared Calendar ViewSupport collaborative updates between co-parents with a shared online calendar. Future integrations with Google Calendar or iCal.
+
+3. Two-Way NotificationsIntroduce threads for shared events, where both parents can leave comments or confirm attendance/logistics.
+
+4. Progressive Web App (PWA)Enable push notifications and offline capabilities by making the app installable on mobile devices.
+
+This MVP lays the foundation for a smart, responsive parenting assistant focused on easing school-related coordination.
+
