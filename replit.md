@@ -98,7 +98,58 @@ ParentPal is a web application designed to help divorced or separated parents st
 
 Preferred communication style: Simple, everyday language.
 
+## Technical Stack
+
+### Backend
+- **Node.js with Express** - REST API server
+- **TypeScript** - Type safety and modern JavaScript features
+- **Drizzle ORM** - Database operations and schema management
+- **PostgreSQL** - Primary database (via Supabase)
+- **OpenAI GPT-4o** - NLP for extracting events from school emails
+- **Zod** - Request validation and type safety
+
+### Frontend  
+- **Progressive Web App** - Mobile-first HTML/CSS/JavaScript interface
+- **Responsive Design** - Optimized for mobile devices
+- **RESTful API Integration** - Clean separation between frontend and backend
+
+### Database Schema
+- **Users** - Parent profiles with contact preferences
+- **Children** - Child records linked to parents
+- **Parenting Schedule** - Custody calendar (day of week mappings)
+- **Emails** - Raw school emails for processing
+- **Events** - Extracted events with dates, preparation requirements
+- **Notifications** - Generated alerts and daily briefings
+
+### Key Features Implemented
+1. **Email Ingestion** - Store and process school emails
+2. **AI Event Extraction** - OpenAI GPT-4o extracts structured event data
+3. **User Management** - Create parent profiles and add children
+4. **Event Timeline** - View upcoming events filtered by responsibility
+5. **Smart Processing** - Match events to children by name recognition
+
+## Current Status
+
+### ✅ Completed
+- Database schema with proper relations
+- OpenAI integration for email processing
+- RESTful API endpoints for all core operations
+- Responsive web interface for testing
+- Email processing with event extraction
+
+### 🔄 In Progress
+- Database connection (requires Supabase setup)
+- Server deployment and testing
+
+### 📋 Next Steps
+1. Set up Supabase database connection
+2. Test email processing with real school emails
+3. Implement parenting schedule management
+4. Add notification system
+5. Create daily briefing generation
+
 ## Changelog
 
-Changelog:
-- June 26, 2025. Initial setup
+- June 26, 2025 - Initial project setup and architecture
+- June 26, 2025 - Complete backend API with OpenAI integration
+- June 26, 2025 - Progressive web app interface created
