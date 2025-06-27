@@ -982,7 +982,7 @@
         function checkGmailConnection() {
             // Force clear any invalid tokens first
             const rawTokens = localStorage.getItem('gmailTokens');
-            if (rawTokens === 'null' || rawTokens === '{}' || rawTokens === 'undefined') {
+            if (rawTokens === 'null' || rawTokens === '{}' || rawTokens === 'undefined' || rawTokens === null) {
                 localStorage.removeItem('gmailTokens');
             }
             
@@ -1004,11 +1004,18 @@
                 // Parse and validate tokens
                 let validTokens = false;
                 try {
-                    if (tokens && tokens !== 'null' && tokens !== '{}') {
+                    if (tokens && tokens !== 'null' && tokens !== '{}' && tokens !== 'undefined') {
                         const parsedTokens = JSON.parse(tokens);
-                        validTokens = parsedTokens && parsedTokens.access_token;
+                        validTokens = parsedTokens && parsedTokens.access_token && parsedTokens.access_token.length > 0;
+                        console.log('Token validation:', { 
+                            tokensExist: !!parsedTokens, 
+                            hasAccessToken: !!parsedTokens?.access_token,
+                            accessTokenLength: parsedTokens?.access_token?.length,
+                            validTokens 
+                        });
                     }
                 } catch (e) {
+                    console.error('Error parsing tokens:', e);
                     validTokens = false;
                 }
                 
@@ -1024,10 +1031,12 @@
                     connectButtons.forEach(btn => {
                         btn.disabled = true;
                         btn.textContent = 'Gmail Connected';
+                        btn.style.opacity = '0.6';
                     });
                     syncButtons.forEach(btn => {
                         btn.disabled = false;
                         btn.textContent = 'Sync Emails';
+                        btn.style.opacity = '1';
                     });
                 } else {
                     statusElement.innerHTML = `
@@ -1175,8 +1184,19 @@
         window.addEventListener('message', function(event) {
             if (event.data === 'gmail-connected') {
                 console.log('Gmail connection successful! Updating UI...');
-                checkGmailConnection();
-                alert('Gmail connected successfully! You can now sync your emails.');
+                
+                // Add a small delay to ensure tokens are fully stored
+                setTimeout(() => {
+                    const storedTokens = localStorage.getItem('gmailTokens');
+                    console.log('Tokens after OAuth completion:', { 
+                        hasTokens: !!storedTokens,
+                        tokenLength: storedTokens?.length,
+                        firstChars: storedTokens?.substring(0, 50) + '...'
+                    });
+                    
+                    checkGmailConnection();
+                    alert('Gmail connected successfully! You can now sync your emails.');
+                }, 100);
             } else if (event.data === 'gmail-error') {
                 console.error('Gmail connection failed');
                 alert('Gmail connection failed. Please try again.');
