@@ -4,31 +4,35 @@ import path from 'path';
 import routes from './routes';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static(path.join(process.cwd(), 'public')));
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
-// Routes
+// API Routes
 app.use(routes);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Serve frontend for all non-API routes
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+  } else {
+    res.status(404).json({ error: 'API endpoint not found' });
+  }
 });
 
-// Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 ParentPal server running on port ${PORT}`);
   console.log(`📧 Ready to process school emails and manage parenting schedules`);
-  console.log(`🌐 Access at: http://0.0.0.0:${PORT}`);
-  console.log(`🌐 External access: https://workspace.${process.env.REPL_OWNER}.replit.dev`);
-  
+  console.log(`🌐 Local access: http://0.0.0.0:${PORT}`);
+  console.log(`🌐 External access: https://parentpaltracker.${process.env.REPL_OWNER}.replit.dev`);
+  console.log(`📁 Serving static files from: ${path.join(__dirname, '../public')}`);
+
   // Log environment status
   console.log('Environment check:', {
     hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
@@ -37,14 +41,6 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     redirectUri: process.env.GOOGLE_REDIRECT_URI,
     nodeEnv: process.env.NODE_ENV || 'development'
   });
-});
-
-server.on('error', (err) => {
-  console.error('❌ Server error:', err);
-  if (err.code === 'EADDRINUSE') {
-    console.log('Port 3000 is already in use. Trying to kill existing process...');
-    process.exit(1);
-  }
 });
 
 export default app;

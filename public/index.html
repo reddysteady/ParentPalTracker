@@ -462,24 +462,28 @@
             // Hide all tab contents
             const tabContents = document.querySelectorAll('.tab-content');
             tabContents.forEach(content => {
-                content.classList.remove('active');
+                if (content && content.classList) {
+                    content.classList.remove('active');
+                }
             });
 
             // Remove active class from all tabs
             const tabs = document.querySelectorAll('.nav-tab');
             tabs.forEach(tab => {
-                tab.classList.remove('active');
+                if (tab && tab.classList) {
+                    tab.classList.remove('active');
+                }
             });
 
             // Show selected tab content
             const selectedTab = document.getElementById(tabName);
-            if (selectedTab) {
+            if (selectedTab && selectedTab.classList) {
                 selectedTab.classList.add('active');
             }
 
             // Add active class to clicked tab
-            const clickedTab = event ? event.target : document.querySelector(`[onclick="showTab('${tabName}')"]`);
-            if (clickedTab) {
+            const clickedTab = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (clickedTab && clickedTab.classList) {
                 clickedTab.classList.add('active');
             }
 

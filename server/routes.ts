@@ -63,7 +63,18 @@ router.get('/api/events', async (req, res) => {
     const allEvents = await db.select().from(events);
     res.json(allEvents);
   } catch (error) {
+    console.error('Error fetching events:', error);
     res.status(500).json({ error: 'Failed to fetch events' });
+  }
+});
+
+router.post('/api/events', async (req, res) => {
+  try {
+    const newEvent = await db.insert(events).values(req.body).returning();
+    res.json(newEvent[0]);
+  } catch (error) {
+    console.error('Error creating event:', error);
+    res.status(500).json({ error: 'Failed to create event' });
   }
 });
 
