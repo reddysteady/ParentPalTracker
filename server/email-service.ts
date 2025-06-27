@@ -29,17 +29,19 @@ export async function processIncomingEmail(incomingEmail: IncomingEmail) {
     // e.g., ed@parentpal.app -> find user with customEmailAddress = "ed@parentpal.app"
     const users = await storage.getAllUsers(); // We need to add this method
     
-    // Look up user by email address (try both primary email and custom email address)
-    let user = users.find(u => u.email === incomingEmail.from);
+    // Look up user by the TO address (custom forwarding address)
+    // The email was sent TO the user's custom address, not FROM their address
+    let user = users.find(u => u.customEmailAddress === incomingEmail.to);
 
-    // If not found by primary email, try custom email address
+    // If no custom email address, try matching primary email as fallback
     if (!user) {
-      user = users.find(u => u.customEmailAddress === incomingEmail.from);
+      user = users.find(u => u.email === incomingEmail.to);
     }
 
     if (!user) {
-      console.error(`No user found for email address: ${incomingEmail.from}`);
-      return { success: false, error: 'User not found' };
+      console.error(`No user found for recipient address: ${incomingEmail.to}`);
+      console.log(`Email was sent FROM: ${incomingEmail.from} TO: ${incomingEmail.to}`);
+      return { success: false, error: 'User not found for recipient address' };
     }
 
     // Store the raw email
