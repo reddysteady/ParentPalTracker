@@ -216,7 +216,7 @@ router.get('/api/auth/google/callback', async (req, res) => {
       clientId: process.env.GOOGLE_CLIENT_ID?.substring(0, 30) + '...',
       hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
       redirectUri: process.env.GOOGLE_REDIRECT_URI,
-      code: typeof code,
+      receivedCode: !!code,
       errorMessage: error.message,
       errorStack: error.stack
     });

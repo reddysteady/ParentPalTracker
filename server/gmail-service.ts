@@ -33,7 +33,7 @@ export class GmailIntegration {
     console.log('🔍 OAuth2Client configuration:', {
       clientId: this.oauth2Client._clientId?.substring(0, 30) + '...',
       clientSecret: this.oauth2Client._clientSecret ? 'SET' : 'MISSING',
-      redirectUri: this.oauth2Client.redirectUri
+      redirectUri: config.redirectUri
     });
 
     const authUrl = this.oauth2Client.generateAuthUrl({
@@ -233,7 +233,7 @@ export function createGmailService(): GmailIntegration {
   const config = {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback'
+    redirectUri: process.env.GOOGLE_REDIRECT_URI || `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:3000'}/api/auth/google/callback`
   };
 
   console.log('📧 Creating Gmail service with config:', {
