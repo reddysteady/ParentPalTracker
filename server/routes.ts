@@ -2,8 +2,8 @@ import express, { Router, Request, Response } from 'express';
 import { db } from './db';
 import { users, children, emails, events, notifications } from '../shared/schema';
 import { eq } from 'drizzle-orm';
-import { gmailService } from './gmail-service';
-import { emailService } from './email-service';
+import { createGmailService } from './gmail-service';
+import { processIncomingEmail } from './email-service';
 
 const router = Router();
 
@@ -171,7 +171,8 @@ router.get('/api/debug/oauth', (req: Request, res: Response) => {
 // Gmail OAuth endpoints
 router.get('/api/auth/google', async (req, res) => {
   try {
-    const authUrl = await gmailService.getAuthUrl();
+    const gmailService = createGmailService();
+    const authUrl = gmailService.getAuthUrl();
     res.redirect(authUrl);
   } catch (error) {
     console.error('Error generating auth URL:', error);
@@ -186,7 +187,8 @@ router.get('/api/auth/google/callback', async (req, res) => {
       return res.status(400).json({ error: 'Authorization code required' });
     }
 
-    const tokens = await gmailService.exchangeCodeForTokens(code as string);
+    const gmailService = createGmailService();
+    const tokens = await gmailService.getTokens(code as string);
 
     // In a real app, you'd store these tokens securely in the database
     // For now, we'll return them to be stored in localStorage
@@ -225,14 +227,12 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
     const { tokens } = req.body;
 
     // Process emails using the email service
-    const result = await emailService.processIncomingEmail({
-      userId,
-      // Mock email data - in real implementation, this would fetch from Gmail
+    const result = await processIncomingEmail({
+      to: 'user@parentpal.app',
+      from: 'test@example.com',
       subject: 'Test sync',
       body: 'Gmail sync test',
-      sender: 'test@example.com',
-      receivedAt: new Date(),
-      gmailMessageId: 'test-sync-' + Date.now()
+      receivedAt: new Date()
     });
 
     res.json({ success: true, processed: 1, result });

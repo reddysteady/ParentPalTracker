@@ -4,7 +4,7 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import path from "path";
-import routes from "./routes";
+import routes from "./routes-test";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '5000', 10);
@@ -66,11 +66,13 @@ app.use(
 );
 
 // Serve frontend for all non-API routes
-app.get("*", (req, res) => {
-  if (!req.path.startsWith("/api")) {
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith("/api")) {
     res.sendFile(path.join(__dirname, "../public/index.html"));
-  } else {
+  } else if (req.path.startsWith("/api")) {
     res.status(404).json({ error: "API endpoint not found" });
+  } else {
+    next();
   }
 });
 
