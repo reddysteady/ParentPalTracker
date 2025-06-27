@@ -195,7 +195,19 @@ router.get('/api/auth/google/callback', async (req, res) => {
     res.send(`
       <script>
         localStorage.setItem('gmailTokens', '${JSON.stringify(tokens)}');
-        window.close();
+        
+        // Notify parent window about successful connection
+        if (window.opener) {
+          window.opener.postMessage('gmail-connected', '*');
+        }
+        
+        // Show success message before closing
+        document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px;"><h2>Gmail Connected Successfully!</h2><p>You can now close this window.</p></div>';
+        
+        // Close window after a brief delay
+        setTimeout(() => {
+          window.close();
+        }, 2000);
       </script>
     `);
   } catch (error) {

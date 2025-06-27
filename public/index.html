@@ -719,7 +719,24 @@
 
         // Gmail integration functions
         function connectGmail() {
-            window.location.href = '/api/auth/google';
+            // Open OAuth in new window
+            const authWindow = window.open('/api/auth/google', 'gmail-auth', 'width=500,height=600');
+            
+            // Listen for successful connection
+            const messageListener = (event) => {
+                if (event.data === 'gmail-connected') {
+                    // Update Gmail connection status immediately
+                    checkGmailConnection();
+                    
+                    // Show success message
+                    alert('Gmail connected successfully! You can now sync your emails.');
+                    
+                    // Clean up listener
+                    window.removeEventListener('message', messageListener);
+                }
+            };
+            
+            window.addEventListener('message', messageListener);
         }
 
         function syncGmail() {
@@ -916,6 +933,9 @@
                     loadChildren();
                     loadChildrenOptions();
                     loadEvents();
+                    
+                    // Check Gmail connection status on startup
+                    checkGmailConnection();
 
                     // Handle OAuth tokens from URL params
                     const urlParams = new URLSearchParams(window.location.search);
