@@ -212,7 +212,20 @@ router.get('/api/auth/google/callback', async (req, res) => {
     `);
   } catch (error) {
     console.error('Error exchanging code for tokens:', error);
-    res.status(500).json({ error: 'Failed to exchange authorization code' });
+    console.error('OAuth Configuration Debug:', {
+      clientId: process.env.GOOGLE_CLIENT_ID?.substring(0, 30) + '...',
+      hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+      redirectUri: process.env.GOOGLE_REDIRECT_URI,
+      code: typeof code,
+      errorMessage: error.message,
+      errorStack: error.stack
+    });
+    
+    res.send(`
+      <script>
+        document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px;"><h2>OAuth Error</h2><p>Failed to exchange authorization code: ${error.message}</p><p>Please check the console for details.</p></div>';
+      </script>
+    `);
   }
 });
 
