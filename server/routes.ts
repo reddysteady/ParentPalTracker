@@ -84,6 +84,16 @@ router.post('/api/children', async (req, res) => {
 });
 
 // Email endpoints
+router.get('/api/emails', async (req, res) => {
+  try {
+    const allEmails = await db.select().from(emails);
+    res.json(allEmails);
+  } catch (error) {
+    console.error('Error fetching emails:', error);
+    res.status(500).json({ error: 'Failed to fetch emails' });
+  }
+});
+
 router.post('/api/emails', async (req, res) => {
   try {
     const { userId, subject, body, sender, receivedAt, gmailMessageId } = req.body;

@@ -875,7 +875,7 @@
 
             } catch (error) {
                 console.error('Error loading email list:', error);
-                emailList.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px;">Error loading emails. Please try again.</div>';
+                emailList.innerHTML = `<div style="color: #dc3545; text-align: center; padding: 20px;">Error loading emails: ${error.message}<br>Please check console for details.</div>`;
             }
         }
 
