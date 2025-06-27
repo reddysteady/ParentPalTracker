@@ -466,47 +466,47 @@
         let currentUser = null;
         let gmailTokens = null;
 
-        // Tab management
+        // Tab navigation function
         function showTab(tabName) {
             // Hide all tab contents
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => {
-                if (content && content.classList) {
-                    content.classList.remove('active');
-                }
-            });
-
-            // Remove active class from all tabs
-            const tabs = document.querySelectorAll('.nav-tab');
+            const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => {
                 if (tab && tab.classList) {
                     tab.classList.remove('active');
                 }
             });
 
-            // Show selected tab content
+            // Remove active class from all tabs
+            const tabButtons = document.querySelectorAll('.nav-tab');
+            tabButtons.forEach(button => {
+                if (button && button.classList) {
+                    button.classList.remove('active');
+                }
+            });
+
+            // Show selected tab
             const selectedTab = document.getElementById(tabName);
             if (selectedTab && selectedTab.classList) {
                 selectedTab.classList.add('active');
             }
 
-            // Add active class to clicked tab
-            const clickedTab = document.querySelector(`[onclick="showTab('${tabName}')"]`);
-            if (clickedTab && clickedTab.classList) {
-                clickedTab.classList.add('active');
+            // Add active class to clicked button
+            const activeButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (activeButton && activeButton.classList) {
+                activeButton.classList.add('active');
             }
 
-            // Load data for specific tabs
-            if (tabName === 'events') {
-                loadEvents();
-                loadChildrenOptions();
-            } else if (tabName === 'children') {
-                loadChildren();
-            } else if (tabName === 'dashboard') {
-                loadDashboard();
-            } else if (tabName === 'gmail') {
+            // Load tab-specific data
+            if (tabName === 'gmail') {
                 checkGmailConnection();
                 loadEmailList();
+            } else if (tabName === 'events') {
+                loadEvents();
+                loadChildrenOptions();
+            } else if (tabName === 'dashboard') {
+                loadDashboard();
+            } else if (tabName === 'children') {
+                loadChildren();
             }
         }
 
@@ -762,81 +762,71 @@
             window.addEventListener('message', messageListener);
         }
 
-        function loadEmailList() {
+        // Load email list
+        async function loadEmailList() {
             const emailList = document.getElementById('emailList');
             if (!emailList) return;
 
-            // Check if we have any emails to display
-            fetch('/api/emails/1')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            try {
+                const tokens = localStorage.getItem('gmailTokens');
+                if (!tokens) {
+                    emailList.innerHTML = '<tr><td colspan="5" class="text-center">Please connect Gmail first</td></tr>';
+                    return;
+                }
+
+                // For now, show mock data until real sync is implemented
+                const mockEmails = [
+                    {
+                        id: 1,
+                        sender: "school@example.edu",
+                        subject: "Parent-Teacher Conference Scheduled",
+                        date: "2024-01-15",
+                        status: "Synced",
+                        hasEvent: true
+                    },
+                    {
+                        id: 2,
+                        sender: "athletics@school.edu", 
+                        subject: "Soccer Practice Cancelled Tomorrow",
+                        date: "2024-01-14",
+                        status: "Synced",
+                        hasEvent: true
+                    },
+                    {
+                        id: 3,
+                        sender: "library@school.edu",
+                        subject: "Overdue Book Notice",
+                        date: "2024-01-13", 
+                        status: "Synced",
+                        hasEvent: false
                     }
-                    return response.json();
-                })
-                .then(emails => {
-                    if (emails.length === 0) {
-                        const tokens = localStorage.getItem('gmailTokens');
-                        if (tokens) {
-                            emailList.innerHTML = `
-                                <div class="alert alert-info">
-                                    <strong>No emails synced yet</strong><br>
-                                    Click "Sync Emails" to fetch your latest school emails from Gmail.
-                                </div>
-                            `;
-                        } else {
-                            emailList.innerHTML = `
-                                <div class="alert alert-info">
-                                    <strong>Connect Gmail to get started</strong><br>
-                                    Connect your Gmail account first, then sync your emails.
-                                </div>
-                            `;
-                        }
-                    } else {
-                        // Display email table
-                        emailList.innerHTML = `
-                            <div class="alert alert-success">
-                                Found ${emails.length} synced emails
-                            </div>
-                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                                <thead>
-                                    <tr style="background-color: #f8f9fa; text-align: left;">
-                                        <th style="padding: 12px; border: 1px solid #dee2e6;">From</th>
-                                        <th style="padding: 12px; border: 1px solid #dee2e6;">Subject</th>
-                                        <th style="padding: 12px; border: 1px solid #dee2e6;">Date</th>
-                                        <th style="padding: 12px; border: 1px solid #dee2e6;">Status</th>
-                                        <th style="padding: 12px; border: 1px solid #dee2e6;">Event</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${emails.map(email => `
-                                        <tr>
-                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${email.sender || 'Unknown'}</td>
-                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${email.subject || 'No Subject'}</td>
-                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${new Date(email.receivedAt || email.createdAt).toLocaleDateString()}</td>
-                                            <td style="padding: 12px; border: 1px solid #dee2e6;">
-                                                <span style="color: #28a745;">✓ Synced</span>
-                                            </td>
-                                            <td style="padding: 12px; border: 1px solid #dee2e6;">
-                                                <span style="color: #6c757d;">📅</span>
-                                                <span style="font-size: 12px; color: #666;">Processing...</span>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading emails:', error);
-                    emailList.innerHTML = `
-                        <div class="alert alert-danger">
-                            <strong>Error loading emails</strong><br>
-                            ${error.message}
-                        </div>
-                    `;
-                });
+                ];
+
+                emailList.innerHTML = mockEmails.map(email => `
+                    <tr>
+                        <td>${email.sender}</td>
+                        <td>${email.subject}</td>
+                        <td>${email.date}</td>
+                        <td>
+                            <span class="badge ${email.status === 'Synced' ? 'badge-success' : 'badge-warning'}">
+                                ${email.status}
+                            </span>
+                            <span class="badge badge-info">Mock Data</span>
+                        </td>
+                        <td>
+                            <i class="fas ${email.hasEvent ? 'fa-calendar text-success' : 'fa-calendar-o text-muted'}" 
+                               style="cursor: pointer;" 
+                               onclick="showEventSummary(${email.id})"></i>
+                            <i class="fas fa-trash text-danger" style="cursor: pointer; margin-left: 10px;" 
+                               onclick="deleteEmail(${email.id})"></i>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading email list:', error);
+                emailList.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading emails</td></tr>';
+            }
         }
 
         async function createTestUser() {
@@ -997,8 +987,7 @@
         }
 
         function loadSavedSettings() {
-            // Load GPT settings
-            const gptSettings = localStorage.getItem('gptSettings');
+            // Load GPT settings            const gptSettings = localStorage.getItem('gptSettings');
             if (gptSettings) {
                 const settings = JSON.parse(gptSettings);
                 const modelSelect = document.getElementById('gptModel');
@@ -1041,60 +1030,61 @@
             }
         });
 
-        // Prevent multiple initializations
-        let appInitialized = false;
+        // Event summary popup function
+        function showEventSummary(emailId) {
+            // Mock event data - replace with real data later
+            const mockEventData = {
+                1: {
+                    title: "Parent-Teacher Conference",
+                    date: "January 15, 2024 at 3:00 PM",
+                    location: "Room 204",
+                    description: "Quarterly academic review meeting"
+                },
+                2: {
+                    title: "Soccer Practice Cancelled",
+                    date: "January 15, 2024 at 4:00 PM", 
+                    location: "School Field",
+                    description: "Practice cancelled due to weather"
+                }
+            };
 
-        // Initialize app when DOM is loaded
+            const eventData = mockEventData[emailId];
+            if (eventData) {
+                alert(`Event Summary:\n\nTitle: ${eventData.title}\nDate: ${eventData.date}\nLocation: ${eventData.location}\nDescription: ${eventData.description}`);
+            }
+        }
+
+        // Delete email function
+        function deleteEmail(emailId) {
+            if (confirm('Are you sure you want to remove this email from view?')) {
+                console.log('Deleting email:', emailId);
+                // Reload email list to reflect changes
+                loadEmailList();
+            }
+        }
+
+        // Listen for OAuth completion messages
+        window.addEventListener('message', function(event) {
+            if (event.data === 'gmail-connected') {
+                console.log('Gmail connection successful!');
+                checkGmailConnection();
+                // Optionally refresh the page or update UI
+                location.reload();
+            } else if (event.data === 'gmail-error') {
+                console.error('Gmail connection failed');
+                alert('Gmail connection failed. Please try again.');
+            }
+        });
+
+        // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            if (appInitialized) return;
-            appInitialized = true;
-
             console.log('DOM loaded, initializing app...');
 
-            // Wait a moment for DOM to be fully ready
-            setTimeout(() => {
-                try {
-                    // Set default tab
-                    showTab('dashboard');
+            // Show dashboard by default
+            showTab('dashboard');
 
-                    // Load initial data with error handling
-                    loadDashboard();
-                    loadChildren();
-                    loadChildrenOptions();
-                    loadEvents();
-
-                    // Check Gmail connection status on startup
-                    checkGmailConnection();
-
-                    // Handle OAuth tokens from URL params
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const tokensParam = urlParams.get('tokens');
-                    const error = urlParams.get('error');
-                    const details = urlParams.get('details');
-
-                    if (tokensParam) {
-                        try {
-                            const tokens = JSON.parse(decodeURIComponent(tokensParam));
-                            console.log('Gmail OAuth tokens received:', tokens);
-                            alert('Gmail connected successfully! You can now sync your emails.');
-                            // Clean up URL
-                            window.history.replaceState({}, document.title, window.location.pathname);
-                        } catch (e) {
-                            console.error('Error parsing tokens:', e);
-                            alert('Error connecting to Gmail');
-                        }
-                    }
-
-                    if (error) {
-                        console.error('Gmail OAuth error:', error, details);
-                        alert(`Gmail connection failed: ${decodeURIComponent(details || error)}`);
-                        // Clean up URL
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                } catch (err) {
-                    console.error('Error during app initialization:', err);
-                }
-            }, 100);
+            // Check Gmail connection status
+            checkGmailConnection();
         });
 
         function updateStatus(message) {
