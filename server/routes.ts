@@ -8,16 +8,18 @@ import { emailService } from './email-service';
 const router = Router();
 
 // Health check endpoint
-router.get('/health', (req, res) => {
+router.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    database: process.env.DATABASE_URL ? 'connected' : 'mock',
+    devMode: process.env.DEV_MODE === 'true'
   });
 });
 
-// User endpoints
-router.get('/users', async (req, res) => {
+// User endpoints  
+router.get('/api/users', async (req, res) => {
   try {
     const allUsers = await db.select().from(users);
     res.json(allUsers);
@@ -27,7 +29,7 @@ router.get('/users', async (req, res) => {
   }
 });
 
-router.post('/users', async (req, res) => {
+router.post('/api/users', async (req, res) => {
   try {
     const { email, name, customEmailAddress, phoneNumber } = req.body;
     const newUser = await db.insert(users).values({
@@ -44,7 +46,7 @@ router.post('/users', async (req, res) => {
 });
 
 // Children endpoints
-router.get('/children', async (req, res) => {
+router.get('/api/children', async (req, res) => {
   try {
     const allChildren = await db.select().from(children);
     res.json(allChildren);
@@ -54,7 +56,7 @@ router.get('/children', async (req, res) => {
   }
 });
 
-router.post('/children', async (req, res) => {
+router.post('/api/children', async (req, res) => {
   try {
     const { userId, name, school, grade } = req.body;
     const newChild = await db.insert(children).values({
@@ -71,7 +73,7 @@ router.post('/children', async (req, res) => {
 });
 
 // Email endpoints
-router.post('/emails', async (req, res) => {
+router.post('/api/emails', async (req, res) => {
   try {
     const { userId, subject, body, sender, receivedAt, gmailMessageId } = req.body;
     const newEmail = await db.insert(emails).values({
@@ -90,7 +92,7 @@ router.post('/emails', async (req, res) => {
 });
 
 // Events endpoints
-router.get('/events', async (req, res) => {
+router.get('/api/events', async (req, res) => {
   try {
     const allEvents = await db.select().from(events);
     res.json(allEvents);
@@ -100,7 +102,7 @@ router.get('/events', async (req, res) => {
   }
 });
 
-router.post('/events', async (req, res) => {
+router.post('/api/events', async (req, res) => {
   try {
     const { userId, childId, emailId, title, description, eventDate, location, requiresAction, actionDeadline, extractedData } = req.body;
     const newEvent = await db.insert(events).values({
@@ -123,7 +125,7 @@ router.post('/events', async (req, res) => {
 });
 
 // Debug endpoint for OAuth troubleshooting
-router.get('/debug/oauth', (req, res) => {
+router.get('/api/debug/oauth', (req, res) => {
   console.log('🔍 Environment validation:', {
     hasClientId: !!process.env.GOOGLE_CLIENT_ID,
     hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
@@ -165,7 +167,7 @@ router.get('/debug/oauth', (req, res) => {
 });
 
 // Gmail OAuth endpoints
-router.get('/auth/google', async (req, res) => {
+router.get('/api/auth/google', async (req, res) => {
   try {
     const authUrl = await gmailService.getAuthUrl();
     res.redirect(authUrl);
@@ -175,7 +177,7 @@ router.get('/auth/google', async (req, res) => {
   }
 });
 
-router.get('/auth/google/callback', async (req, res) => {
+router.get('/api/auth/google/callback', async (req, res) => {
   try {
     const { code } = req.query;
     if (!code) {
@@ -199,7 +201,7 @@ router.get('/auth/google/callback', async (req, res) => {
 });
 
 // Gmail integration endpoints
-router.post('/gmail/setup', async (req, res) => {
+router.post('/api/gmail/setup', async (req, res) => {
   try {
     const { userId, tokens } = req.body;
 
@@ -215,7 +217,7 @@ router.post('/gmail/setup', async (req, res) => {
   }
 });
 
-router.post('/gmail/sync/:userId', async (req, res) => {
+router.post('/api/gmail/sync/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     const { tokens } = req.body;
@@ -238,7 +240,7 @@ router.post('/gmail/sync/:userId', async (req, res) => {
   }
 });
 
-router.post('/gmail/monitor/:userId', async (req, res) => {
+router.post('/api/gmail/monitor/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
 
@@ -252,4 +254,4 @@ router.post('/gmail/monitor/:userId', async (req, res) => {
   }
 });
 
-export { router };
+export default router;

@@ -6,9 +6,9 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   name: text('name').notNull(),
-  customEmailAddress: text('custom_email_address'), // For forwarding school emails
+  customEmailAddress: text('custom_email_address'),
   phoneNumber: text('phone_number'),
-  gmailTokens: jsonb('gmail_tokens'), // Store Gmail OAuth tokens
+  gmailTokens: jsonb('gmail_tokens'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 });
@@ -24,7 +24,7 @@ export const children = pgTable('children', {
   updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// Emails table - stores incoming school emails
+// Emails table
 export const emails = pgTable('emails', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id).notNull(),
@@ -37,7 +37,7 @@ export const emails = pgTable('emails', {
   createdAt: timestamp('created_at').defaultNow()
 });
 
-// Events table - extracted from emails
+// Events table
 export const events = pgTable('events', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id).notNull(),
@@ -49,20 +49,20 @@ export const events = pgTable('events', {
   location: text('location'),
   requiresAction: boolean('requires_action').default(false),
   actionDeadline: timestamp('action_deadline'),
-  extractedData: jsonb('extracted_data'), // Raw NLP extraction results
+  extractedData: jsonb('extracted_data'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// Notifications table - SMS/alerts sent to parents
+// Notifications table
 export const notifications = pgTable('notifications', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id).notNull(),
   eventId: integer('event_id').references(() => events.id),
-  type: text('type').notNull(), // 'sms', 'email', 'push'
+  type: text('type').notNull(),
   message: text('message').notNull(),
   sentAt: timestamp('sent_at'),
-  status: text('status').default('pending'), // 'pending', 'sent', 'failed'
-  externalId: text('external_id'), // Twilio message ID, etc.
+  status: text('status').default('pending'),
+  externalId: text('external_id'),
   createdAt: timestamp('created_at').defaultNow()
 });

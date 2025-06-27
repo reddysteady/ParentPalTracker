@@ -1,15 +1,41 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "../shared/schema";
+import { Pool } from '@neondatabase/serverless';
+import * as schema from '../shared/schema';
 
-neonConfig.webSocketConstructor = ws;
-
+// In development mode without DATABASE_URL, create a mock db object
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('DATABASE_URL is required in production');
+  }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+  console.log('⚠️  No DATABASE_URL found - running in development mode with mock database');
+
+  // Create a mock database object for development
+  export const db = {
+    select: () => ({
+      from: () => ({
+        where: () => Promise.resolve([]),
+        limit: () => Promise.resolve([])
+      })
+    }),
+    insert: () => ({
+      values: () => ({
+        returning: () => Promise.resolve([{ id: 1, createdAt: new Date() }])
+      })
+    }),
+    update: () => ({
+      set: () => ({
+        where: () => Promise.resolve([])
+      })
+    }),
+    delete: () => ({
+      where: () => Promise.resolve([])
+    })
+  } as any;
+} else {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  export const db = drizzle(pool, { 
+    schema,
+    logger: process.env.NODE_ENV === 'development'
+  });
+}
