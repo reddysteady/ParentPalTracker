@@ -729,6 +729,13 @@
 
         // Gmail integration functions
         function connectGmail() {
+            // Check if Gmail tokens are already stored
+            const tokens = localStorage.getItem('gmailTokens');
+            if (tokens) {
+                alert('Gmail is already connected! You can sync your emails.');
+                return;
+            }
+
             // Open OAuth in new window
             const authWindow = window.open('/api/auth/google', 'gmail-auth', 'width=500,height=600');
 
@@ -753,6 +760,83 @@
             };
 
             window.addEventListener('message', messageListener);
+        }
+
+        function loadEmailList() {
+            const emailList = document.getElementById('emailList');
+            if (!emailList) return;
+
+            // Check if we have any emails to display
+            fetch('/api/emails/1')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(emails => {
+                    if (emails.length === 0) {
+                        const tokens = localStorage.getItem('gmailTokens');
+                        if (tokens) {
+                            emailList.innerHTML = `
+                                <div class="alert alert-info">
+                                    <strong>No emails synced yet</strong><br>
+                                    Click "Sync Emails" to fetch your latest school emails from Gmail.
+                                </div>
+                            `;
+                        } else {
+                            emailList.innerHTML = `
+                                <div class="alert alert-info">
+                                    <strong>Connect Gmail to get started</strong><br>
+                                    Connect your Gmail account first, then sync your emails.
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // Display email table
+                        emailList.innerHTML = `
+                            <div class="alert alert-success">
+                                Found ${emails.length} synced emails
+                            </div>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                                <thead>
+                                    <tr style="background-color: #f8f9fa; text-align: left;">
+                                        <th style="padding: 12px; border: 1px solid #dee2e6;">From</th>
+                                        <th style="padding: 12px; border: 1px solid #dee2e6;">Subject</th>
+                                        <th style="padding: 12px; border: 1px solid #dee2e6;">Date</th>
+                                        <th style="padding: 12px; border: 1px solid #dee2e6;">Status</th>
+                                        <th style="padding: 12px; border: 1px solid #dee2e6;">Event</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${emails.map(email => `
+                                        <tr>
+                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${email.sender || 'Unknown'}</td>
+                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${email.subject || 'No Subject'}</td>
+                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${new Date(email.receivedAt || email.createdAt).toLocaleDateString()}</td>
+                                            <td style="padding: 12px; border: 1px solid #dee2e6;">
+                                                <span style="color: #28a745;">✓ Synced</span>
+                                            </td>
+                                            <td style="padding: 12px; border: 1px solid #dee2e6;">
+                                                <span style="color: #6c757d;">📅</span>
+                                                <span style="font-size: 12px; color: #666;">Processing...</span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading emails:', error);
+                    emailList.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Error loading emails</strong><br>
+                            ${error.message}
+                        </div>
+                    `;
+                });
         }
 
         function syncGmail() {
@@ -837,6 +921,7 @@
         function checkGmailConnection() {
             const tokens = localStorage.getItem('gmailTokens');
             const statusElement = document.getElementById('gmailStatus');
+            const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
 
             if (statusElement) {
                 if (tokens) {
@@ -847,6 +932,11 @@
                             Your Gmail account is connected and ready to sync school emails.
                         </div>
                     `;
+                    // Enable sync button, disable connect button
+                    connectButtons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.textContent = 'Gmail Connected';
+                    });
                 } else {
                     statusElement.innerHTML = `
                         <div class="alert alert-info">
@@ -855,6 +945,11 @@
                             Connect your Gmail to automatically sync school emails and extract events.
                         </div>
                     `;
+                    // Enable connect button
+                    connectButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.textContent = 'Connect Gmail';
+                    });
                 }
             }
         }

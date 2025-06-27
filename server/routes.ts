@@ -176,9 +176,9 @@ router.get('/api/emails/:userId', async (req, res) => {
 router.delete('/api/emails/:emailId', async (req, res) => {
   try {
     const emailId = parseInt(req.params.emailId);
-    
+
     await db.delete(emails).where(eq(emails.id, emailId));
-    
+
     res.json({ success: true, message: 'Email removed from view' });
   } catch (error) {
     console.error('Error deleting email:', error);
@@ -200,47 +200,47 @@ router.get('/api/auth/google', async (req, res) => {
 
 router.get('/api/auth/google/callback', async (req, res) => {
   const { code } = req.query;
-  
+
   try {
     if (!code) {
       return res.status(400).json({ error: 'Authorization code required' });
     }
 
     console.log('Starting token exchange with code:', code ? 'Present' : 'Missing');
-    
+
     const gmailService = createGmailService();
     const tokens = await gmailService.getTokens(code as string);
-    
+
     console.log('Token exchange successful, tokens received:', !!tokens);
 
     // In a real app, you'd store these tokens securely in the database
     // For now, we'll return them to be stored in localStorage
     const tokensJson = JSON.stringify(tokens).replace(/'/g, "\\'");
-    
+
     res.send(`
       <script>
         console.log('OAuth callback page loaded');
-        
+
         try {
           localStorage.setItem('gmailTokens', '${tokensJson}');
           console.log('Tokens stored in localStorage');
-          
+
           // Notify parent window about successful connection
           if (window.opener) {
             window.opener.postMessage('gmail-connected', '*');
             console.log('Notified parent window');
           }
-          
+
           // Show success message before closing
           document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px; background: #f0f8ff;"><h2 style="color: #28a745;">Gmail Connected Successfully!</h2><p>Closing window...</p></div>';
           console.log('Success message displayed');
-          
+
           // Close window immediately after notification
           setTimeout(() => {
             console.log('Closing window');
             window.close();
           }, 500);
-          
+
         } catch (error) {
           console.error('Error in OAuth callback script:', error);
           document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px; background: #fff3cd;"><h2 style="color: #856404;">OAuth Warning</h2><p>Connection successful but there was an issue storing tokens.</p><p>Please check the console and try again.</p></div>';
@@ -258,17 +258,17 @@ router.get('/api/auth/google/callback', async (req, res) => {
       errorMessage: error.message,
       errorStack: error.stack
     });
-    
+
     const errorMsg = (error.message || 'Unknown error').replace(/'/g, "\\'");
     const isInvalidGrant = error.message?.includes('invalid_grant');
-    
+
     res.send(`
       <script>
         console.error('OAuth Error Details:', '${errorMsg}');
-        
+
         const errorDiv = document.createElement('div');
         errorDiv.style.cssText = 'font-family: Arial; text-align: center; padding: 50px; background: #fff3cd; border: 1px solid #ffeaa7; max-width: 600px; margin: 50px auto; border-radius: 8px;';
-        
+
         ${isInvalidGrant ? `
           errorDiv.innerHTML = \`
             <h2 style="color: #856404;">OAuth Configuration Issue</h2>
@@ -294,9 +294,9 @@ router.get('/api/auth/google/callback', async (req, res) => {
             <button onclick="window.close()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 10px;">Close Window</button>
           \`;
         `}
-        
+
         document.body.appendChild(errorDiv);
-        
+
         // Notify parent window about the error
         if (window.opener) {
           window.opener.postMessage('gmail-error', '*');
@@ -328,16 +328,29 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
     const userId = parseInt(req.params.userId);
     const { tokens } = req.body;
 
+    console.log('📧 Gmail sync request for user:', userId);
+    console.log('📧 Tokens provided:', !!tokens);
+
     if (!tokens) {
-      return res.status(400).json({ error: 'Gmail tokens required' });
+      console.log('❌ No Gmail tokens provided');
+      return res.status(400).json({ error: 'Gmail tokens required - please connect Gmail first' });
     }
 
-    // Create Gmail service and set tokens
+    // Validate environment variables
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.log('❌ Missing Gmail OAuth credentials');
+      return res.status(500).json({ error: 'Gmail integration not configured - missing credentials' });
+    }
+
+    console.log('📧 Creating Gmail service...');
     const gmailService = createGmailService();
     gmailService.setTokens(tokens);
 
+    console.log('📧 Processing unread emails...');
     // Process unread emails using actual Gmail service
     const result = await gmailService.processUnreadEmails(userId);
+
+    console.log('📧 Gmail sync completed:', result);
 
     res.json({ 
       success: true, 
@@ -346,8 +359,11 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
       message: `Processed ${result.processed} emails${result.errors > 0 ? `, ${result.errors} errors` : ''}`
     });
   } catch (error) {
-    console.error('Error syncing Gmail:', error);
-    res.status(500).json({ error: 'Failed to sync Gmail: ' + error.message });
+    console.error('❌ Error syncing Gmail:', error);
+    res.status(500).json({ 
+      error: 'Failed to sync Gmail: ' + error.message,
+      details: error.stack
+    });
   }
 });
 

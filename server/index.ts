@@ -76,40 +76,13 @@ app.use((req, res, next) => {
   }
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 ParentPal server running on port ${PORT}`);
-  console.log(
-    `📧 Ready to process school emails and manage parenting schedules`,
-  );
-  console.log(`🌐 Local access: http://0.0.0.0:${PORT}`);
-  console.log(
-    `🌐 External access: https://${process.env.REPLIT_DEV_DOMAIN || `parentpaltracker.${process.env.REPL_OWNER}.replit.dev`}`,
-  );
-  console.log(
-    `📁 Serving static files from: ${path.join(__dirname, "../public")}`,
-  );
-
-  // Log environment status
-  const envStatus = {
-    nodeEnv: process.env.NODE_ENV || "development",
-    devMode: process.env.DEV_MODE === "true",
-    hasDatabase: !!process.env.DATABASE_URL,
-    hasGoogleAuth: !!(
-      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-    ),
-    hasOpenAI: !!process.env.OPENAI_API_KEY,
-    hasTwilio: !!(
-      process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
-    ),
-  };
-
-  console.log("✅ Environment status:", envStatus);
-
-  if (process.env.DEV_MODE === "true") {
-    console.log(
-      "🔧 Development mode: External services will use mock implementations",
-    );
-  }
+  console.log(`🌐 Access at: http://localhost:${PORT}`);
+  console.log(`📧 Gmail OAuth configured: ${!!process.env.GOOGLE_CLIENT_ID}`);
+  console.log(`📊 Database configured: ${!!process.env.DATABASE_URL}`);
+  console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('✅ Server startup complete');
 });
 
 // Graceful shutdown handling
