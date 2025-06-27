@@ -360,10 +360,19 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error syncing Gmail:', error);
-    res.status(500).json({ 
-      error: 'Failed to sync Gmail: ' + error.message,
-      details: error.stack
-    });
+    
+    // Check if error is due to token expiration
+    if (error.message.includes('invalid_grant') || error.message.includes('Token has been expired')) {
+      res.status(401).json({ 
+        error: 'Gmail tokens expired - please reconnect your Gmail account',
+        expired: true
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Failed to sync Gmail: ' + error.message,
+        details: error.stack
+      });
+    }
   }
 });
 

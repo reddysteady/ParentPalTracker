@@ -875,7 +875,14 @@
                     updateStatus(`✓ ${result.message}`);
                     await loadEmailList();
                 } else {
-                    updateStatus(`✗ Error: ${result.error}`);
+                    // Handle token expiration
+                    if (result.expired) {
+                        localStorage.removeItem('gmailTokens');
+                        checkGmailConnection(); // Update UI to show disconnected state
+                        alert('Your Gmail connection has expired. Please reconnect Gmail to continue syncing emails.');
+                    } else {
+                        updateStatus(`✗ Error: ${result.error}`);
+                    }
                 }
             } catch (error) {
                 console.error('Sync error:', error);
