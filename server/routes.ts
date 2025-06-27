@@ -1,12 +1,32 @@
 import { Router } from 'express';
 import { db } from './db';
 import { users, children, emails, events } from '../shared/schema';
+import { eq } from 'drizzle-orm';
+import { gmailService } from './gmail-service';
 
 const router = Router();
 
-// Health check
+// Health check endpoint
 router.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const healthStatus = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: process.env.npm_package_version || '1.0.0',
+    environment: {
+      nodeEnv: process.env.NODE_ENV || 'development',
+      devMode: process.env.DEV_MODE === 'true',
+      port: process.env.PORT || 5000
+    },
+    services: {
+      database: !!process.env.DATABASE_URL,
+      googleAuth: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+      openai: !!process.env.OPENAI_API_KEY,
+      twilio: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
+    }
+  };
+
+  res.json(healthStatus);
 });
 
 // User routes
@@ -99,7 +119,7 @@ router.get('/api/debug/oauth', (req, res) => {
       fullUrl: `${req.protocol}://${req.get('host')}${req.originalUrl}`
     }
   };
-  
+
   console.log('🔍 OAuth Debug Info:', JSON.stringify(debugInfo, null, 2));
   res.json(debugInfo);
 });
@@ -153,7 +173,7 @@ router.get('/api/auth/google', async (req, res) => {
     const { createGmailService } = await import('./gmail-service');
     const gmailService = createGmailService();
     const authUrl = gmailService.getAuthUrl();
-    
+
     console.log('🔍 Generated OAuth URL analysis:', {
       fullUrl: authUrl,
       length: authUrl.length,
@@ -162,7 +182,7 @@ router.get('/api/auth/google', async (req, res) => {
       hasRedirectUri: authUrl.includes(encodeURIComponent(process.env.GOOGLE_REDIRECT_URI || '')),
       redirectUriInUrl: authUrl.match(/redirect_uri=([^&]+)/)?.[1] ? decodeURIComponent(authUrl.match(/redirect_uri=([^&]+)/)?.[1] || '') : 'NOT_FOUND'
     });
-    
+
     res.redirect(authUrl);
   } catch (error) {
     console.error('❌ Failed to initiate Gmail OAuth:', error);
@@ -175,14 +195,14 @@ router.get('/api/auth/google/callback', async (req, res) => {
   try {
     console.log('📧 Gmail OAuth callback received');
     console.log('Query params:', req.query);
-    
+
     const { code, error, error_description } = req.query;
-    
+
     if (error) {
       console.error('❌ OAuth error from Google:', { error, error_description });
       return res.redirect(`/?error=google_oauth_error&details=${encodeURIComponent(error_description || error)}`);
     }
-    
+
     if (!code) {
       console.error('❌ No authorization code received');
       return res.redirect('/?error=no_code');
