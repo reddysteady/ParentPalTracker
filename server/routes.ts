@@ -198,7 +198,7 @@ router.get('/api/auth/google', async (req, res) => {
   }
 });
 
-router.get('/api/auth/google/callback', async (req, res) => {
+router.get('/api/auth/google/callback', async (req: Request, res: Response) => {
   const { code } = req.query;
 
   try {

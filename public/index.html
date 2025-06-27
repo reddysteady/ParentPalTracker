@@ -911,6 +911,7 @@
             const tokens = localStorage.getItem('gmailTokens');
             const statusElement = document.getElementById('gmailStatus');
             const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
+            const syncButtons = document.querySelectorAll('button[onclick="syncGmail()"]');
 
             if (statusElement) {
                 if (tokens) {
@@ -926,6 +927,10 @@
                         btn.disabled = true;
                         btn.textContent = 'Gmail Connected';
                     });
+                    syncButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.textContent = 'Sync Emails';
+                    });
                 } else {
                     statusElement.innerHTML = `
                         <div class="alert alert-info">
@@ -934,10 +939,14 @@
                             Connect your Gmail to automatically sync school emails and extract events.
                         </div>
                     `;
-                    // Enable connect button
+                    // Enable connect button, disable sync button
                     connectButtons.forEach(btn => {
                         btn.disabled = false;
                         btn.textContent = 'Connect Gmail';
+                    });
+                    syncButtons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.textContent = 'Sync Emails (Connect Gmail First)';
                     });
                 }
             }
