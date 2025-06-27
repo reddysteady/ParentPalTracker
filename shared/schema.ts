@@ -1,5 +1,5 @@
 
-import { pgTable, text, integer, timestamp, boolean, jsonb, serial } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, boolean, jsonb, serial, sql } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -12,6 +12,7 @@ export const users = pgTable('users', {
   customEmailAddress: text('custom_email_address'),
   phoneNumber: text('phone_number'),
   gmailTokens: jsonb('gmail_tokens'),
+  schoolDomains: text('school_domains').array().default(sql`ARRAY[]::text[]`),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 });

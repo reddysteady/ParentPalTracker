@@ -88,7 +88,26 @@ export class GmailIntegration {
   /**
    * Search for unread school emails using Gmail filters
    */
-  async searchSchoolEmails(query: string = 'is:unread from:(*@*.edu OR *@*.k12.* OR *@school*)'): Promise<any[]> {
+  async searchSchoolEmails(userId?: number, query?: string): Promise<any[]> {
+    // Build domain-specific query if userId provided
+    if (userId && !query) {
+      const { storage } = await import('./storage');
+      const user = await storage.getUser(userId);
+      
+      if (user?.schoolDomains && user.schoolDomains.length > 0) {
+        // Build query for specific domains
+        const domainQueries = user.schoolDomains.map(domain => `from:*@${domain}`).join(' OR ');
+        query = `is:unread (${domainQueries})`;
+        console.log(`Searching emails from configured domains: ${user.schoolDomains.join(', ')}`);
+      } else {
+        // Default query for common school domains
+        query = 'is:unread from:(*@*.edu OR *@*.k12.* OR *@school*)';
+        console.log('No domains configured, using default school email patterns');
+      }
+    } else if (!query) {
+      // Fallback to default
+      query = 'is:unread from:(*@*.edu OR *@*.k12.* OR *@school*)';
+    }
     try {
       const response = await this.gmail.users.messages.list({
         userId: 'me',
