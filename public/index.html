@@ -839,59 +839,58 @@
                 });
         }
 
-        function syncGmail() {
-            const tokens = localStorage.getItem('gmailTokens');
-            if (!tokens) {
+        async function createTestUser() {
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'edward.stead@gmail.com',
+                        name: 'Edward Stead',
+                        customEmailAddress: 'edward@parentpal.app',
+                        phoneNumber: '+1234567890'
+                    })
+                });
+
+                const user = await response.json();
+                console.log('User created:', user);
+                return user;
+            } catch (error) {
+                console.error('Error creating user:', error);
+                return null;
+            }
+        }
+
+        async function syncGmail() {
+            const gmailTokens = JSON.parse(localStorage.getItem('gmailTokens') || '{}');
+            if (!gmailTokens.access_token) {
                 alert('Please connect Gmail first');
                 return;
             }
 
-            const syncButton = document.querySelector('button[onclick="syncGmail()"]');
-            if (syncButton) {
-                syncButton.disabled = true;
-                syncButton.textContent = 'Syncing...';
-            }
+            try {
+                updateStatus('Creating/finding user...');
+                // First ensure user exists
+                await createTestUser();
 
-            // Update email list to show loading state
-            const emailList = document.getElementById('emailList');
-            if (emailList) {
-                emailList.innerHTML = '<div class="loading">Syncing emails from Gmail...</div>';
-            }
+                updateStatus('Syncing emails...');
+                const response = await fetch('/api/gmail/sync/1', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tokens: gmailTokens })
+                });
 
-            fetch('/api/gmail/sync/1', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ tokens: JSON.parse(tokens) })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    alert(`Gmail sync completed: ${data.processed || 0} emails processed${data.errors > 0 ? `, ${data.errors} errors` : ''}`);
-                    loadEmailList(); // Refresh email list
-                    loadEvents(); // Refresh events
-                    loadTodayEvents(); // Refresh dashboard
+                const result = await response.json();
+                if (result.success) {
+                    updateStatus(`✓ ${result.message}`);
+                    await loadEmailList();
                 } else {
-                    throw new Error(data.error || 'Sync failed');
+                    updateStatus(`✗ Error: ${result.error}`);
                 }
-            })
-            .catch(error => {
-                console.error('Gmail sync error:', error);
-                alert('Gmail sync failed: ' + error.message);
-                loadEmailList(); // Refresh to show current state
-            })
-            .finally(() => {
-                if (syncButton) {
-                    syncButton.disabled = false;
-                    syncButton.textContent = 'Sync Emails';
-                }
-            });
+            } catch (error) {
+                console.error('Sync error:', error);
+                updateStatus('✗ Failed to sync emails');
+            }
         }
 
         function startMonitoring() {
@@ -962,7 +961,8 @@
             if (debugOutput && debugInfo) {
                 debugOutput.textContent = `Attempting to connect to: ${authURL}\n\n`;
                 debugOutput.textContent += `localStorage['gmailTokens']: ${localStorage.getItem('gmailTokens')}\n`;
-                debugOutput.textContent += `window.location.href: ${window.location.href}\n`;
+                ```text
+debugOutput.textContent += `window.location.href: ${window.location.href}\n`;
 
                 // Show the debug information
                 debugInfo.style.display = 'block';
@@ -1097,6 +1097,10 @@
                 }
             }, 100);
         });
+
+        function updateStatus(message) {
+            console.log(message);
+        }
     </script>
 </body>
 </html>
