@@ -1,0 +1,101 @@
+🟢 Prompt: Investigate Express Route Registration/Path-to-RegExp Error
+You are a code analysis agent. My Node.js/Express project is failing at startup with this error:
+
+php
+Copy
+Edit
+TypeError: Missing parameter name at 1: https://git.new/pathToRegexpError
+    at name (.../node_modules/path-to-regexp/src/index.ts:153:13)
+    ...etc
+Key Details
+I’m using Express with a separate routes.ts file and a main index.ts app/server file.
+
+Monkey-patching of route registration methods (get, post, use) did NOT detect any invalid (undefined or empty) paths.
+
+The error seems to happen after all routes are registered.
+
+The route import looks like:
+
+js
+Copy
+Edit
+import routes from './routes';
+app.use(routes);
+routes.ts imports a shared schema:
+
+js
+Copy
+Edit
+import { users, children, emails, events, notifications } from '../shared/schema';
+There are no obvious logs about undefined or empty paths in my debug output.
+
+The error always occurs on startup, and my log shows all intended routes.
+
+What to Investigate
+Step through the following:
+
+Check All Route Imports and Exports
+
+Is routes actually a valid Express Router instance? Is it a default export in routes.ts?
+
+Is there a mismatch between default/named export in the import/export between index.ts and routes.ts?
+
+Print/log the value of routes right before app.use(routes) to see if it’s undefined or {}.
+
+Check Shared Schema Imports
+
+Is shared/schema.ts present and are all named exports (users, children, etc.) valid and non-empty?
+
+Is the schema file being imported correctly, or is it empty or malformed?
+
+Check for Dynamic Route Registration
+
+Are there any .use() or .get()/.post() calls with a variable, array, or imported value that could be undefined or empty?
+
+Are there any spread operators (...) being used in route registration that might include undefined/empty items?
+
+Check for Import Errors
+
+Is there any import in routes.ts or its dependencies that is failing silently (for example, importing from a file that is empty or throws)?
+
+Check the Actual Registered Router
+
+Print/log the value and type of the imported routes in index.ts to confirm it’s an Express Router.
+
+Comment out the app.use(routes) line; does the error go away? If yes, the problem is with the router or its dependencies.
+
+Check for Edge-Case Route Declarations
+
+Are there any route or middleware declarations with an empty string, null, or undefined as the path?
+
+Expected Output
+For each step above, output:
+
+Any issues detected
+
+The value/type of any suspect variable (e.g., routes, imported schema)
+
+Which step (if any) led to identifying the cause of the path-to-regexp error
+
+Recommend a fix (e.g., correct export/import, fix schema file, ensure all imports are valid).
+
+Instructions
+Do not attempt to “fix” code yet. Your job is to isolate the failure point and explain exactly what’s going wrong.
+
+Output in concise, numbered bullet points for each investigation step.
+
+Example Investigation Output:
+✅ routes is imported as a default export and is a valid Express Router instance.
+
+❌ users is undefined in shared/schema.ts. This means any route that uses this model is passing undefined into Drizzle ORM, breaking downstream middleware.
+
+✅ No dynamic route arrays or spreads found.
+
+✅ All imports succeed except shared/schema.ts.
+
+✅ After commenting out app.use(routes), server boots without error.
+
+✅ No empty or undefined paths in route declarations.
+
+Conclusion:
+The error occurs because users (and possibly other models) are undefined in shared/schema.ts. Fix the export in that file and the error will resolve.
