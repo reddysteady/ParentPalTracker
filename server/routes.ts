@@ -188,27 +188,45 @@ router.get('/api/auth/google/callback', async (req, res) => {
       return res.status(400).json({ error: 'Authorization code required' });
     }
 
+    console.log('Starting token exchange with code:', code ? 'Present' : 'Missing');
+    
     const gmailService = createGmailService();
     const tokens = await gmailService.getTokens(code as string);
+    
+    console.log('Token exchange successful, tokens received:', !!tokens);
 
     // In a real app, you'd store these tokens securely in the database
     // For now, we'll return them to be stored in localStorage
+    const tokensJson = JSON.stringify(tokens).replace(/'/g, "\\'");
+    
     res.send(`
       <script>
-        localStorage.setItem('gmailTokens', '${JSON.stringify(tokens)}');
+        console.log('OAuth callback page loaded');
         
-        // Notify parent window about successful connection
-        if (window.opener) {
-          window.opener.postMessage('gmail-connected', '*');
+        try {
+          localStorage.setItem('gmailTokens', '${tokensJson}');
+          console.log('Tokens stored in localStorage');
+          
+          // Notify parent window about successful connection
+          if (window.opener) {
+            window.opener.postMessage('gmail-connected', '*');
+            console.log('Notified parent window');
+          }
+          
+          // Show success message before closing
+          document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px; background: #f0f8ff;"><h2 style="color: #28a745;">Gmail Connected Successfully!</h2><p>You can now close this window.</p><p style="font-size: 12px; color: #666;">This window will close automatically in 3 seconds.</p></div>';
+          console.log('Success message displayed');
+          
+          // Close window after a brief delay
+          setTimeout(() => {
+            console.log('Closing window');
+            window.close();
+          }, 3000);
+          
+        } catch (error) {
+          console.error('Error in OAuth callback script:', error);
+          document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px; background: #fff3cd;"><h2 style="color: #856404;">OAuth Warning</h2><p>Connection successful but there was an issue storing tokens.</p><p>Please check the console and try again.</p></div>';
         }
-        
-        // Show success message before closing
-        document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px;"><h2>Gmail Connected Successfully!</h2><p>You can now close this window.</p></div>';
-        
-        // Close window after a brief delay
-        setTimeout(() => {
-          window.close();
-        }, 2000);
       </script>
     `);
   } catch (error: any) {
