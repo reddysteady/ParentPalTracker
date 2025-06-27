@@ -123,11 +123,27 @@ export class GmailIntegration {
       query = 'is:unread from:(*@*.edu OR *@*.k12.* OR *@school*)';
     }
     try {
-      const response = await this.gmail.users.messages.list({
-        userId: 'me',
-        q: query,
-        maxResults: 20
-      });
+      let response;
+      try {
+        response = await this.gmail.users.messages.list({
+          userId: 'me',
+          q: query,
+          maxResults: 20
+        });
+      } catch (authError: any) {
+        if (authError.code === 401 || authError.message?.includes('invalid authentication')) {
+          console.log('🔄 Access token expired, attempting refresh...');
+          await this.refreshTokens();
+          // Retry the request with refreshed tokens
+          response = await this.gmail.users.messages.list({
+            userId: 'me',
+            q: query,
+            maxResults: 20
+          });
+        } else {
+          throw authError;
+        }
+      }
 
       if (!response.data.messages) {
         return [];
@@ -136,11 +152,26 @@ export class GmailIntegration {
       // Get full message details for each email
       const emails = await Promise.all(
         response.data.messages.map(async (message: any) => {
-          const fullMessage = await this.gmail.users.messages.get({
-            userId: 'me',
-            id: message.id,
-            format: 'full'
-          });
+          let fullMessage;
+          try {
+            fullMessage = await this.gmail.users.messages.get({
+              userId: 'me',
+              id: message.id,
+              format: 'full'
+            });
+          } catch (authError: any) {
+            if (authError.code === 401 || authError.message?.includes('invalid authentication')) {
+              console.log('🔄 Token expired, refreshing for message retrieval...');
+              await this.refreshTokens();
+              fullMessage = await this.gmail.users.messages.get({
+                userId: 'me',
+                id: message.id,
+                format: 'full'
+              });
+            } else {
+              throw authError;
+            }
+          }
           return this.parseGmailMessage(fullMessage.data);
         })
       );

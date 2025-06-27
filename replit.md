@@ -142,13 +142,14 @@ Preferred communication style: Simple, everyday language.
 - Gmail search optimization for cost reduction
 
 ### 🔄 In Progress  
-- Server startup and integration testing
+- Gmail OAuth token refresh optimization for expired credentials
+- Email processing optimization with domain filtering
 
 ### 📋 Next Steps
-1. Test email processing with real school emails and configured domains
-2. Implement parenting schedule management
-3. Add notification system
-4. Create daily briefing generation
+1. Implement parenting schedule management
+2. Add notification system with SMS support
+3. Create daily briefing generation
+4. Test with real school domain configurations
 
 ## Changelog
 
