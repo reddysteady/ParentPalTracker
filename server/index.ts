@@ -80,6 +80,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 ParentPal server running on port ${PORT}`);
   console.log(`🌐 Access at: http://localhost:${PORT}`);
   console.log(`📧 Gmail OAuth configured: ${!!process.env.GOOGLE_CLIENT_ID}`);
+  console.log(`🤖 OpenAI configured: ${!!process.env.OPENAI_API_KEY}`);
   console.log(`📊 Database configured: ${!!process.env.DATABASE_URL}`);
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('✅ Server startup complete');
