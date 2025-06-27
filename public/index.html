@@ -450,12 +450,6 @@ Focus on actionable items and important deadlines.</textarea>
         }
 
         function loadDashboard() {
-            const dashboardElement = document.getElementById('dashboardContent');
-            if (!dashboardElement) {
-                console.error('Dashboard element not found');
-                return;
-            }
-
             fetch('/api/health')
                 .then(response => {
                     if (!response.ok) {
@@ -464,7 +458,8 @@ Focus on actionable items and important deadlines.</textarea>
                     return response.json();
                 })
                 .then(data => {
-                    dashboardElement.innerHTML = `
+                    const statusElement = document.getElementById('dashboardStatus');
+                    statusElement.innerHTML = `
                         <div class="card">
                             <h3>System Status</h3>
                             <p>✅ Server is running</p>
@@ -474,7 +469,8 @@ Focus on actionable items and important deadlines.</textarea>
                 })
                 .catch(error => {
                     console.error('Error loading dashboard:', error);
-                    dashboardElement.innerHTML = `
+                    const statusElement = document.getElementById('dashboardStatus');
+                    statusElement.innerHTML = `
                         <div class="card">
                             <h3>System Status</h3>
                             <p>❌ Server connection failed: ${error.message}</p>
