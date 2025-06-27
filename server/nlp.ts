@@ -65,8 +65,34 @@ Return only valid JSON array, no other text:
       return [];
     }
 
-    // Parse the JSON response
-    const events = JSON.parse(response.trim());
+    console.log('Raw OpenAI response:', response);
+
+    // Clean up the response to extract JSON
+    let cleanedResponse = response.trim();
+    
+    // Remove common prefixes/suffixes that OpenAI might add
+    cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    
+    // Find JSON array boundaries
+    const jsonStart = cleanedResponse.indexOf('[');
+    const jsonEnd = cleanedResponse.lastIndexOf(']');
+    
+    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1);
+    }
+
+    console.log('Cleaned response for parsing:', cleanedResponse);
+
+    // Parse the JSON response with error handling
+    let events;
+    try {
+      events = JSON.parse(cleanedResponse);
+    } catch (jsonError) {
+      console.error('JSON parsing failed:', jsonError);
+      console.error('Failed to parse response:', cleanedResponse);
+      throw new Error(`Invalid JSON response from OpenAI: ${jsonError}`);
+    }
     
     // Validate it's an array
     if (!Array.isArray(events)) {
