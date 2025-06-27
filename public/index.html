@@ -503,7 +503,12 @@
         // Dashboard functions
         function loadDashboard() {
             fetch('/api/health')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     const statusElement = document.getElementById('dashboardStatus');
                     if (statusElement) {
@@ -525,7 +530,7 @@
                                 <span class="status-indicator status-disconnected"></span>
                                 Server connection failed
                             </div>
-                            <div class="error-message">Error: ${error.message}</div>
+                            <p style="margin-top: 10px; color: #dc3545;">Error: ${error.message}</p>
                         `;
                     }
                 });
@@ -677,7 +682,12 @@
 
         function loadEvents() {
             fetch('/api/events')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(events => {
                     const container = document.getElementById('eventsList');
                     if (container) {
@@ -702,7 +712,7 @@
                     console.error('Error loading events:', error);
                     const container = document.getElementById('eventsList');
                     if (container) {
-                        container.innerHTML = `<div class="error-message">Failed to load events</div>`;
+                        container.innerHTML = `<div class="error-message">Failed to load events: ${error.message}</div>`;
                     }
                 });
         }
@@ -885,51 +895,57 @@
             }
         });
 
-        // Initialize app
+        // Prevent multiple initializations
+        let appInitialized = false;
+
+        // Initialize app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
+            if (appInitialized) return;
+            appInitialized = true;
+
             console.log('DOM loaded, initializing app...');
 
-            // Check if required DOM elements exist
-            const requiredElements = ['todayEvents', 'childrenList', 'eventsList'];
-            const missingElements = requiredElements.filter(id => !document.getElementById(id));
-
-            if (missingElements.length > 0) {
-                console.error('Missing required DOM elements:', missingElements);
-                return;
-            }
-
-            showTab('dashboard');
-            loadDashboard();
-            loadSavedSettings();
-            checkGmailConnection();
-
-            // Check for OAuth tokens or errors in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const tokens = urlParams.get('tokens');
-            const error = urlParams.get('error');
-
-            if (tokens) {
+            // Wait a moment for DOM to be fully ready
+            setTimeout(() => {
                 try {
-                    const parsedTokens = JSON.parse(decodeURIComponent(tokens));
-                    localStorage.setItem('gmailTokens', JSON.stringify(parsedTokens));
-                    console.log('Gmail OAuth successful');
-                    alert('Gmail integration successful! You can now sync your emails.');
-                    // Clean up URL
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    checkGmailConnection();
-                } catch (e) {
-                    console.error('Error parsing tokens:', e);
-                    alert('Error processing Gmail authentication. Please try again.');
-                }
-            }
+                    // Set default tab
+                    showTab('dashboard');
 
-            if (error) {
-                const details = urlParams.get('details');
-                console.error('OAuth error:', error, details);
-                alert(`Gmail connection failed: ${decodeURIComponent(details || error)}`);
-                // Clean up URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
+                    // Load initial data with error handling
+                    loadDashboard();
+                    loadChildren();
+                    loadChildrenOptions();
+                    loadEvents();
+
+                    // Handle OAuth tokens from URL params
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const tokensParam = urlParams.get('tokens');
+                    const error = urlParams.get('error');
+                    const details = urlParams.get('details');
+
+                    if (tokensParam) {
+                        try {
+                            const tokens = JSON.parse(decodeURIComponent(tokensParam));
+                            console.log('Gmail OAuth tokens received:', tokens);
+                            alert('Gmail connected successfully! You can now sync your emails.');
+                            // Clean up URL
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        } catch (e) {
+                            console.error('Error parsing tokens:', e);
+                            alert('Error connecting to Gmail');
+                        }
+                    }
+
+                    if (error) {
+                        console.error('Gmail OAuth error:', error, details);
+                        alert(`Gmail connection failed: ${decodeURIComponent(details || error)}`);
+                        // Clean up URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                } catch (err) {
+                    console.error('Error during app initialization:', err);
+                }
+            }, 100);
         });
     </script>
 </body>
