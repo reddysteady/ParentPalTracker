@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>ParentPal - School Email & Schedule Manager</title>
     <style>
         * {
@@ -920,7 +923,12 @@
             const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
             const syncButtons = document.querySelectorAll('button[onclick="syncGmail()"]');
             
-            console.log('Checking Gmail connection:', { tokens: !!tokens, connectButtons: connectButtons.length, syncButtons: syncButtons.length });
+            console.log('Checking Gmail connection:', { 
+                tokens: !!tokens, 
+                rawTokens: tokens ? tokens.substring(0, 50) + '...' : 'null',
+                connectButtons: connectButtons.length, 
+                syncButtons: syncButtons.length 
+            });
 
             if (statusElement) {
                 // Parse and validate tokens
@@ -1108,6 +1116,12 @@
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing app...');
+
+            // Clear any invalid cached tokens
+            const tokens = localStorage.getItem('gmailTokens');
+            if (tokens && (tokens === 'null' || tokens === '{}' || tokens === 'undefined')) {
+                localStorage.removeItem('gmailTokens');
+            }
 
             // Show dashboard by default
             showTab('dashboard');
