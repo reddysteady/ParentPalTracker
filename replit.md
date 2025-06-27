@@ -140,6 +140,9 @@ Preferred communication style: Simple, everyday language.
 - Email processing with event extraction
 - Email Settings with domain filtering functionality
 - Gmail search optimization for cost reduction
+- Gmail OAuth integration with token refresh mechanism
+- Email display system showing 193 synced emails
+- Authentication error handling for expired tokens
 
 ### 🔄 In Progress  
 - Gmail OAuth token refresh optimization for expired credentials
