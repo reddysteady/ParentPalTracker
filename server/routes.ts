@@ -147,7 +147,9 @@ router.get('/api/debug/oauth', (req: Request, res: Response) => {
       isHttps: redirectUri.startsWith('https://'),
       hasCorrectDomain: redirectUri.includes('parentpaltracker.edwardstead.replit.dev'),
       hasCallbackPath: redirectUri.includes('/api/auth/google/callback'),
-
+    });
+  }
+});
 
 // Get emails for a specific user
 router.get('/api/emails/:userId', async (req, res) => {
@@ -182,27 +184,6 @@ router.delete('/api/emails/:emailId', async (req, res) => {
     console.error('Error deleting email:', error);
     res.status(500).json({ error: 'Failed to delete email' });
   }
-});
-
-      length: redirectUri.length,
-      endsWithSlash: redirectUri.endsWith('/'),
-      exactMatch: redirectUri === 'https://parentpaltracker.edwardstead.replit.dev/api/auth/google/callback'
-    });
-  }
-
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    console.error('❌ Missing OAuth credentials');
-    return res.status(500).json({ 
-      error: 'Missing OAuth credentials', 
-      details: 'GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set in environment'
-    });
-  }
-
-  res.json({
-    status: 'OAuth configuration check',
-    hasCredentials: true,
-    redirectUri: process.env.GOOGLE_REDIRECT_URI
-  });
 });
 
 // Gmail OAuth endpoints
