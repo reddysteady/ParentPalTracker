@@ -381,6 +381,7 @@
                 <div style="margin-top: 20px;">
                     <button onclick="connectGmail()" class="btn-success">Connect Gmail</button>
                     <button onclick="syncGmail()" class="btn-secondary" style="margin-left: 10px;" disabled>Sync Emails (Connect Gmail First)</button>
+                    <button onclick="toggleSyncSettings()" class="btn-secondary" style="margin-left: 10px;">Sync Settings</button>
                     <button onclick="startMonitoring()" class="btn-secondary" style="margin-left: 10px;">Start Monitoring</button>
                     <button onclick="debugOAuth()" class="btn-secondary" style="margin-left: 10px;">Debug OAuth</button>
                 </div>
@@ -399,8 +400,8 @@
                 </div>
             </div>
 
-            <!-- Email Settings Section -->
-            <div class="card">
+            <!-- Sync Settings - Initially Hidden -->
+            <div class="card" id="sync-settings" style="display: none;">
                 <h3>⚙️ Email Processing Settings</h3>
                 
                 <!-- School Domains Section -->
@@ -439,6 +440,10 @@
                             <div style="font-size: 12px; color: #666;">Last Sync</div>
                         </div>
                     </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button onclick="toggleSyncSettings()" class="btn-secondary">Hide Settings</button>
                 </div>
             </div>
 
@@ -820,65 +825,76 @@
             if (!emailList) return;
 
             try {
-                const tokens = localStorage.getItem('gmailTokens');
-                if (!tokens) {
-                    emailList.innerHTML = '<tr><td colspan="5" class="text-center">Please connect Gmail first</td></tr>';
+                emailList.innerHTML = '<div class="loading">Loading emails...</div>';
+                
+                const response = await fetch('/api/emails');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch emails');
+                }
+                
+                const emails = await response.json();
+                console.log('Loaded emails:', emails.length);
+
+                if (emails.length === 0) {
+                    emailList.innerHTML = '<div class="loading">No emails synced yet. Click "Sync Emails" to get started.</div>';
                     return;
                 }
 
-                // For now, show mock data until real sync is implemented
-                const mockEmails = [
-                    {
-                        id: 1,
-                        sender: "school@example.edu",
-                        subject: "Parent-Teacher Conference Scheduled",
-                        date: "2024-01-15",
-                        status: "Synced",
-                        hasEvent: true
-                    },
-                    {
-                        id: 2,
-                        sender: "athletics@school.edu", 
-                        subject: "Soccer Practice Cancelled Tomorrow",
-                        date: "2024-01-14",
-                        status: "Synced",
-                        hasEvent: true
-                    },
-                    {
-                        id: 3,
-                        sender: "library@school.edu",
-                        subject: "Overdue Book Notice",
-                        date: "2024-01-13", 
-                        status: "Synced",
-                        hasEvent: false
-                    }
-                ];
-
-                emailList.innerHTML = mockEmails.map(email => `
-                    <tr>
-                        <td>${email.sender}</td>
-                        <td>${email.subject}</td>
-                        <td>${email.date}</td>
-                        <td>
-                            <span class="badge ${email.status === 'Synced' ? 'badge-success' : 'badge-warning'}">
-                                ${email.status}
-                            </span>
-                            <span class="badge badge-info">Mock Data</span>
-                        </td>
-                        <td>
-                            <i class="fas ${email.hasEvent ? 'fa-calendar text-success' : 'fa-calendar-o text-muted'}" 
-                               style="cursor: pointer;" 
-                               onclick="showEventSummary(${email.id})"></i>
-                            <i class="fas fa-trash text-danger" style="cursor: pointer; margin-left: 10px;" 
-                               onclick="deleteEmail(${email.id})"></i>
-                        </td>
-                    </tr>
-                `).join('');
+                // Create table for emails
+                emailList.innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
+                                <th style="padding: 12px; text-align: left;">Sender</th>
+                                <th style="padding: 12px; text-align: left;">Subject</th>
+                                <th style="padding: 12px; text-align: left;">Date</th>
+                                <th style="padding: 12px; text-align: left;">Status</th>
+                                <th style="padding: 12px; text-align: left;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${emails.map(email => `
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding: 12px;">${email.sender || 'Unknown'}</td>
+                                    <td style="padding: 12px;">${email.subject}</td>
+                                    <td style="padding: 12px;">${new Date(email.receivedAt).toLocaleDateString()}</td>
+                                    <td style="padding: 12px;">
+                                        <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                            Synced
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px;">
+                                        <button onclick="viewEmail(${email.id})" style="background: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 5px;">View</button>
+                                        <button onclick="deleteEmail(${email.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
 
             } catch (error) {
                 console.error('Error loading email list:', error);
-                emailList.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading emails</td></tr>';
+                emailList.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px;">Error loading emails. Please try again.</div>';
             }
+        }
+
+        function toggleSyncSettings() {
+            const settingsDiv = document.getElementById('sync-settings');
+            const isHidden = settingsDiv.style.display === 'none';
+            
+            settingsDiv.style.display = isHidden ? 'block' : 'none';
+            
+            // Update button text
+            const buttons = document.querySelectorAll('[onclick="toggleSyncSettings()"]');
+            buttons.forEach(button => {
+                button.textContent = isHidden ? 'Hide Settings' : 'Sync Settings';
+            });
+        }
+
+        function viewEmail(emailId) {
+            console.log('Viewing email:', emailId);
+            alert(`Email details for ID: ${emailId}\nThis feature will show full email content in a modal`);
         }
 
         async function createTestUser() {
@@ -918,10 +934,6 @@
             }
 
             try {
-                updateStatus('Creating/finding user...');
-                // First ensure user exists
-                await createTestUser();
-
                 updateStatus('Syncing emails...');
                 const response = await fetch('/api/gmail/sync/1', {
                     method: 'POST',
