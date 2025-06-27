@@ -73,9 +73,9 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     hasOpenAI: !!process.env.OPENAI_API_KEY,
     hasTwilio: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
   };
-  
+
   console.log('✅ Environment status:', envStatus);
-  
+
   if (process.env.DEV_MODE === 'true') {
     console.log('🔧 Development mode: External services will use mock implementations');
   }
