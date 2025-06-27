@@ -1182,15 +1182,25 @@
 
         // Listen for OAuth completion messages
         window.addEventListener('message', function(event) {
-            if (event.data === 'gmail-connected') {
+            // Handle both old string format and new object format for backward compatibility
+            if (event.data === 'gmail-connected' || (event.data && event.data.type === 'gmail-connected')) {
                 console.log('Gmail connection successful! Updating UI...');
                 
-                // Add a small delay to ensure tokens are fully stored
+                // Store tokens if provided in the new format
+                if (event.data && event.data.tokens) {
+                    localStorage.setItem('gmailTokens', JSON.stringify(event.data.tokens));
+                    console.log('Tokens stored from OAuth callback:', { 
+                        hasTokens: true,
+                        hasAccessToken: !!event.data.tokens.access_token,
+                        hasRefreshToken: !!event.data.tokens.refresh_token
+                    });
+                }
+                
+                // Update UI immediately
                 setTimeout(() => {
                     const storedTokens = localStorage.getItem('gmailTokens');
                     console.log('Tokens after OAuth completion:', { 
                         hasTokens: !!storedTokens,
-                        tokenLength: storedTokens?.length,
                         firstChars: storedTokens?.substring(0, 50) + '...'
                     });
                     

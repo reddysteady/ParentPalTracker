@@ -223,20 +223,23 @@ router.get('/api/auth/google/callback', async (req: Request, res: Response) => {
         console.log('OAuth callback page loaded');
 
         try {
-          localStorage.setItem('gmailTokens', '${tokensJson}');
-          console.log('Tokens stored in localStorage');
+          const tokens = ${tokensJson};
+          console.log('Tokens received:', !!tokens);
 
-          // Notify parent window about successful connection
+          // Notify parent window about successful connection and pass tokens
           if (window.opener) {
-            window.opener.postMessage('gmail-connected', '*');
-            console.log('Notified parent window');
+            window.opener.postMessage({ 
+              type: 'gmail-connected', 
+              tokens: tokens 
+            }, '*');
+            console.log('Notified parent window with tokens');
           }
 
           // Show success message before closing
           document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px; background: #f0f8ff;"><h2 style="color: #28a745;">Gmail Connected Successfully!</h2><p>Closing window...</p></div>';
           console.log('Success message displayed');
 
-          // Close window immediately after notification
+          // Close window after notification
           setTimeout(() => {
             console.log('Closing window');
             window.close();
