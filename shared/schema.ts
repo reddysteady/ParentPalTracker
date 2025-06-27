@@ -1,5 +1,8 @@
 
 import { pgTable, text, integer, timestamp, boolean, jsonb, serial } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
 // Users table
 export const users = pgTable('users', {
@@ -65,3 +68,74 @@ export const notifications = pgTable('notifications', {
   sentAt: timestamp('sent_at'),
   createdAt: timestamp('created_at').defaultNow()
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  children: many(children),
+  emails: many(emails),
+  events: many(events),
+  notifications: many(notifications),
+}));
+
+export const childrenRelations = relations(children, ({ one, many }) => ({
+  user: one(users, { fields: [children.userId], references: [users.id] }),
+  events: many(events),
+}));
+
+export const emailsRelations = relations(emails, ({ one, many }) => ({
+  user: one(users, { fields: [emails.userId], references: [users.id] }),
+  events: many(events),
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  user: one(users, { fields: [events.userId], references: [users.id] }),
+  child: one(children, { fields: [events.childId], references: [children.id] }),
+  email: one(emails, { fields: [events.emailId], references: [emails.id] }),
+  notifications: one(notifications, { fields: [events.id], references: [notifications.eventId] }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+  event: one(events, { fields: [notifications.eventId], references: [events.id] }),
+}));
+
+// Zod schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertChildSchema = createInsertSchema(children).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEmailSchema = createInsertSchema(emails).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Child = typeof children.$inferSelect;
+export type InsertChild = z.infer<typeof insertChildSchema>;
+export type Email = typeof emails.$inferSelect;
+export type InsertEmail = z.infer<typeof insertEmailSchema>;
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
