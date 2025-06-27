@@ -4,7 +4,7 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import path from "path";
-import routes from "./routes-test";
+import routes from "./routes";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '5000', 10);
