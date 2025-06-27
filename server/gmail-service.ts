@@ -30,11 +30,26 @@ export class GmailIntegration {
       'https://www.googleapis.com/auth/gmail.modify'
     ];
 
-    return this.oauth2Client.generateAuthUrl({
+    console.log('🔍 OAuth2Client configuration:', {
+      clientId: this.oauth2Client._clientId?.substring(0, 30) + '...',
+      clientSecret: this.oauth2Client._clientSecret ? 'SET' : 'MISSING',
+      redirectUri: this.oauth2Client.redirectUri
+    });
+
+    const authUrl = this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
       prompt: 'consent'
     });
+
+    console.log('🔍 Generated auth URL components:', {
+      fullUrl: authUrl,
+      clientIdParam: authUrl.match(/client_id=([^&]+)/)?.[1]?.substring(0, 30) + '...',
+      redirectUriParam: authUrl.match(/redirect_uri=([^&]+)/)?.[1] ? decodeURIComponent(authUrl.match(/redirect_uri=([^&]+)/)?.[1] || '') : 'NOT_FOUND',
+      scopeParam: authUrl.match(/scope=([^&]+)/)?.[1] ? decodeURIComponent(authUrl.match(/scope=([^&]+)/)?.[1] || '') : 'NOT_FOUND'
+    });
+
+    return authUrl;
   }
 
   /**

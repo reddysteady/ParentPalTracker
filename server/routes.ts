@@ -67,19 +67,69 @@ router.get('/api/events', async (req, res) => {
   }
 });
 
+// Gmail OAuth debugging endpoint
+router.get('/api/debug/oauth', (req, res) => {
+  const debugInfo = {
+    environment: {
+      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...` : 'MISSING',
+      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'MISSING',
+      GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
+      REPL_OWNER: process.env.REPL_OWNER,
+      NODE_ENV: process.env.NODE_ENV || 'development'
+    },
+    expectedUrls: {
+      origin: `https://parentpaltracker.${process.env.REPL_OWNER}.replit.dev`,
+      callback: `https://parentpaltracker.${process.env.REPL_OWNER}.replit.dev/api/auth/google/callback`
+    },
+    currentRequest: {
+      host: req.get('host'),
+      protocol: req.protocol,
+      originalUrl: req.originalUrl,
+      fullUrl: `${req.protocol}://${req.get('host')}${req.originalUrl}`
+    }
+  };
+  
+  console.log('🔍 OAuth Debug Info:', JSON.stringify(debugInfo, null, 2));
+  res.json(debugInfo);
+});
+
 // Gmail OAuth flow endpoints
 router.get('/api/auth/google', async (req, res) => {
   try {
     console.log('📧 Starting Gmail OAuth flow...');
-    console.log('Environment check:', {
+    console.log('🔍 Full request details:', {
+      host: req.get('host'),
+      protocol: req.protocol,
+      originalUrl: req.originalUrl,
+      fullUrl: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+      userAgent: req.get('user-agent'),
+      referer: req.get('referer')
+    });
+
+    console.log('🔍 Environment validation:', {
       hasClientId: !!process.env.GOOGLE_CLIENT_ID,
       hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
       hasRedirectUri: !!process.env.GOOGLE_REDIRECT_URI,
       clientIdLength: process.env.GOOGLE_CLIENT_ID?.length || 0,
       redirectUri: process.env.GOOGLE_REDIRECT_URI,
-      actualClientId: process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...',
-      actualSecret: process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'MISSING'
+      actualClientId: process.env.GOOGLE_CLIENT_ID?.substring(0, 30) + '...',
+      actualSecret: process.env.GOOGLE_CLIENT_SECRET ? `${process.env.GOOGLE_CLIENT_SECRET.substring(0, 10)}...` : 'MISSING',
+      replOwner: process.env.REPL_OWNER
     });
+
+    // Validate redirect URI format
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    if (redirectUri) {
+      console.log('🔍 Redirect URI analysis:', {
+        uri: redirectUri,
+        isHttps: redirectUri.startsWith('https://'),
+        hasCorrectDomain: redirectUri.includes('parentpaltracker.edwardstead.replit.dev'),
+        hasCallbackPath: redirectUri.includes('/api/auth/google/callback'),
+        length: redirectUri.length,
+        endsWithSlash: redirectUri.endsWith('/'),
+        exactMatch: redirectUri === 'https://parentpaltracker.edwardstead.replit.dev/api/auth/google/callback'
+      });
+    }
 
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       console.error('❌ Missing OAuth credentials');
@@ -93,8 +143,15 @@ router.get('/api/auth/google', async (req, res) => {
     const gmailService = createGmailService();
     const authUrl = gmailService.getAuthUrl();
     
-    console.log('Generated auth URL length:', authUrl.length);
-    console.log('Auth URL domain:', authUrl.substring(0, 50) + '...');
+    console.log('🔍 Generated OAuth URL analysis:', {
+      fullUrl: authUrl,
+      length: authUrl.length,
+      domain: authUrl.substring(0, 50) + '...',
+      hasClientId: authUrl.includes(process.env.GOOGLE_CLIENT_ID || ''),
+      hasRedirectUri: authUrl.includes(encodeURIComponent(process.env.GOOGLE_REDIRECT_URI || '')),
+      redirectUriInUrl: authUrl.match(/redirect_uri=([^&]+)/)?.[1] ? decodeURIComponent(authUrl.match(/redirect_uri=([^&]+)/)?.[1] || '') : 'NOT_FOUND'
+    });
+    
     res.redirect(authUrl);
   } catch (error) {
     console.error('❌ Failed to initiate Gmail OAuth:', error);
