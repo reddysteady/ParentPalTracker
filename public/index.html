@@ -894,11 +894,18 @@
                     })
                 });
 
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.log('User created:', { error: 'Failed to create user', details: errorText, status: response.status });
+                    return null;
+                }
+
                 const user = await response.json();
                 console.log('User created:', user);
                 return user;
             } catch (error) {
                 console.error('Error creating user:', error);
+                console.log('User created:', { error: 'Failed to create user' });
                 return null;
             }
         }

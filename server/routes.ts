@@ -35,6 +35,14 @@ router.get('/api/users', async (req, res) => {
 router.post('/api/users', async (req, res) => {
   try {
     const { email, name, customEmailAddress, phoneNumber } = req.body;
+    
+    // Check if user already exists by email
+    const existingUser = await db.select().from(users).where(eq(users.email, email));
+    if (existingUser.length > 0) {
+      console.log('User already exists:', existingUser[0]);
+      return res.json(existingUser[0]); // Return existing user instead of error
+    }
+    
     const newUser = await db.insert(users).values({
       email,
       name,
@@ -44,7 +52,7 @@ router.post('/api/users', async (req, res) => {
     res.status(201).json(newUser[0]);
   } catch (error) {
     console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Failed to create user' });
+    res.status(500).json({ error: 'Failed to create user', details: error.message });
   }
 });
 
