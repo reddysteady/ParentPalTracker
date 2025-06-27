@@ -181,8 +181,9 @@ router.get('/api/auth/google', async (req, res) => {
 });
 
 router.get('/api/auth/google/callback', async (req, res) => {
+  const { code } = req.query;
+  
   try {
-    const { code } = req.query;
     if (!code) {
       return res.status(400).json({ error: 'Authorization code required' });
     }
@@ -210,20 +211,22 @@ router.get('/api/auth/google/callback', async (req, res) => {
         }, 2000);
       </script>
     `);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error exchanging code for tokens:', error);
     console.error('OAuth Configuration Debug:', {
       clientId: process.env.GOOGLE_CLIENT_ID?.substring(0, 30) + '...',
       hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
       redirectUri: process.env.GOOGLE_REDIRECT_URI,
       receivedCode: !!code,
+      codeValue: code ? String(code).substring(0, 20) + '...' : 'NONE',
       errorMessage: error.message,
       errorStack: error.stack
     });
     
+    const errorMsg = (error.message || 'Unknown error').replace(/'/g, "\\'");
     res.send(`
       <script>
-        document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px;"><h2>OAuth Error</h2><p>Failed to exchange authorization code: ${error.message}</p><p>Please check the console for details.</p></div>';
+        document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px;"><h2>OAuth Error</h2><p>Failed to exchange authorization code: ${errorMsg}</p><p>Please check the console for details.</p></div>';
       </script>
     `);
   }
