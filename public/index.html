@@ -294,7 +294,7 @@
                     <button onclick="showTab('children')" class="btn-secondary">Add Child</button>
                     <button onclick="showTab('events')" class="btn-secondary">Add Event</button>
                     <button onclick="connectGmail()" class="btn-success" disabled>Connect Gmail</button>
-                    <button onclick="syncGmail()" class="btn-secondary">Sync Emails</button>
+                    <button onclick="syncGmail()" class="btn-secondary" disabled>Sync Emails (Connect Gmail First)</button>
                 </div>
             </div>
         </div>
@@ -377,7 +377,7 @@
 
                 <div style="margin-top: 20px;">
                     <button onclick="connectGmail()" class="btn-success" disabled>Connect Gmail</button>
-                    <button onclick="syncGmail()" class="btn-secondary" style="margin-left: 10px;">Sync Emails</button>
+                    <button onclick="syncGmail()" class="btn-secondary" style="margin-left: 10px;" disabled>Sync Emails (Connect Gmail First)</button>
                     <button onclick="startMonitoring()" class="btn-secondary" style="margin-left: 10px;">Start Monitoring</button>
                     <button onclick="debugOAuth()" class="btn-secondary" style="margin-left: 10px;">Debug OAuth</button>
                 </div>
