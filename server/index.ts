@@ -7,7 +7,7 @@ import path from "path";
 import routes from "./routes";
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '5000', 10);
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Middleware
 app.use(cors());
@@ -83,7 +83,7 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   );
   console.log(`🌐 Local access: http://0.0.0.0:${PORT}`);
   console.log(
-    `🌐 External access: https://parentpaltracker.${process.env.REPL_OWNER}.replit.dev`,
+    `🌐 External access: https://${process.env.REPLIT_DEV_DOMAIN || `parentpaltracker.${process.env.REPL_OWNER}.replit.dev`}`,
   );
   console.log(
     `📁 Serving static files from: ${path.join(__dirname, "../public")}`,
