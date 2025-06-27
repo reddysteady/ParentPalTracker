@@ -138,12 +138,14 @@ Preferred communication style: Simple, everyday language.
 - RESTful API endpoints for all core operations
 - Responsive web interface for testing
 - Email processing with event extraction
+- Email Settings with domain filtering functionality
+- Gmail search optimization for cost reduction
 
-### 🔄 In Progress
-- OAuth workflow debugging and UI state management fixes
+### 🔄 In Progress  
+- Server startup and integration testing
 
 ### 📋 Next Steps
-1. Test email processing with real school emails
+1. Test email processing with real school emails and configured domains
 2. Implement parenting schedule management
 3. Add notification system
 4. Create daily briefing generation

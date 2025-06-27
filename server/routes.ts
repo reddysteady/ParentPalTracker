@@ -4,6 +4,7 @@ import { users, children, emails, events, notifications } from '../shared/schema
 import { eq } from 'drizzle-orm';
 import { createGmailService } from './gmail-service';
 import { processIncomingEmail } from './email-service';
+import { storage } from './storage';
 
 const router = Router();
 
@@ -387,6 +388,105 @@ router.post('/api/gmail/monitor/:userId', async (req, res) => {
   } catch (error) {
     console.error('Error setting up Gmail monitoring:', error);
     res.status(500).json({ error: 'Failed to setup Gmail monitoring' });
+  }
+});
+
+// Get user domains
+router.get('/api/users/:userId/domains', async (req: Request<{ userId: string }>, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ schoolDomains: user.schoolDomains || [] });
+  } catch (error) {
+    console.error('Error getting user domains:', error);
+    res.status(500).json({ error: 'Failed to get user domains' });
+  }
+});
+
+// Add domain
+router.post('/api/users/:userId/domains', async (req: Request<{ userId: string }>, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const { domain } = req.body;
+    
+    if (!domain || typeof domain !== 'string') {
+      return res.status(400).json({ error: 'Domain is required' });
+    }
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Add domain to array (avoid duplicates)
+    const currentDomains = user.schoolDomains || [];
+    if (!currentDomains.includes(domain)) {
+      const updatedDomains = [...currentDomains, domain];
+      await storage.updateUser(userId, { schoolDomains: updatedDomains });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error adding domain:', error);
+    res.status(500).json({ error: 'Failed to add domain' });
+  }
+});
+
+// Remove domain
+router.delete('/api/users/:userId/domains', async (req: Request<{ userId: string }>, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const { domain } = req.body;
+    
+    if (!domain || typeof domain !== 'string') {
+      return res.status(400).json({ error: 'Domain is required' });
+    }
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Remove domain from array
+    const currentDomains = user.schoolDomains || [];
+    const updatedDomains = currentDomains.filter(d => d !== domain);
+    await storage.updateUser(userId, { schoolDomains: updatedDomains });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error removing domain:', error);
+    res.status(500).json({ error: 'Failed to remove domain' });
+  }
+});
+
+// Get user stats
+router.get('/api/users/:userId/stats', async (req: Request<{ userId: string }>, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const emails = await storage.getEmailsByUserId(userId);
+    const events = await storage.getEventsByUserId(userId);
+    
+    const stats = {
+      emailsProcessed: emails.length,
+      eventsExtracted: events.length,
+      lastSync: emails.length > 0 ? emails[emails.length - 1].receivedAt.toLocaleDateString() : 'Never'
+    };
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error getting user stats:', error);
+    res.status(500).json({ error: 'Failed to get user stats' });
   }
 });
 

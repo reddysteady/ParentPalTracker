@@ -550,6 +550,8 @@
             if (tabName === 'gmail') {
                 checkGmailConnection();
                 loadEmailList();
+                loadDomains();
+                loadProcessingStats();
             } else if (tabName === 'events') {
                 loadEvents();
                 loadChildrenOptions();
