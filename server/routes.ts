@@ -147,6 +147,43 @@ router.get('/api/debug/oauth', (req: Request, res: Response) => {
       isHttps: redirectUri.startsWith('https://'),
       hasCorrectDomain: redirectUri.includes('parentpaltracker.edwardstead.replit.dev'),
       hasCallbackPath: redirectUri.includes('/api/auth/google/callback'),
+
+
+// Get emails for a specific user
+router.get('/api/emails/:userId', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = (page - 1) * limit;
+
+    const userEmails = await db.select()
+      .from(emails)
+      .where(eq(emails.userId, userId))
+      .limit(limit)
+      .offset(offset);
+
+    res.json(userEmails);
+  } catch (error) {
+    console.error('Error fetching emails:', error);
+    res.status(500).json({ error: 'Failed to fetch emails' });
+  }
+});
+
+// Delete email from view (not from Gmail)
+router.delete('/api/emails/:emailId', async (req, res) => {
+  try {
+    const emailId = parseInt(req.params.emailId);
+    
+    await db.delete(emails).where(eq(emails.id, emailId));
+    
+    res.json({ success: true, message: 'Email removed from view' });
+  } catch (error) {
+    console.error('Error deleting email:', error);
+    res.status(500).json({ error: 'Failed to delete email' });
+  }
+});
+
       length: redirectUri.length,
       endsWithSlash: redirectUri.endsWith('/'),
       exactMatch: redirectUri === 'https://parentpaltracker.edwardstead.replit.dev/api/auth/google/callback'
@@ -310,19 +347,26 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
     const userId = parseInt(req.params.userId);
     const { tokens } = req.body;
 
-    // Process emails using the email service
-    const result = await processIncomingEmail({
-      to: 'user@parentpal.app',
-      from: 'test@example.com',
-      subject: 'Test sync',
-      body: 'Gmail sync test',
-      receivedAt: new Date()
-    });
+    if (!tokens) {
+      return res.status(400).json({ error: 'Gmail tokens required' });
+    }
 
-    res.json({ success: true, processed: 1, result });
+    // Create Gmail service and set tokens
+    const gmailService = createGmailService();
+    gmailService.setTokens(tokens);
+
+    // Process unread emails using actual Gmail service
+    const result = await gmailService.processUnreadEmails(userId);
+
+    res.json({ 
+      success: true, 
+      processed: result.processed,
+      errors: result.errors,
+      message: `Processed ${result.processed} emails${result.errors > 0 ? `, ${result.errors} errors` : ''}`
+    });
   } catch (error) {
     console.error('Error syncing Gmail:', error);
-    res.status(500).json({ error: 'Failed to sync Gmail' });
+    res.status(500).json({ error: 'Failed to sync Gmail: ' + error.message });
   }
 });
 
