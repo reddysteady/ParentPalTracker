@@ -989,8 +989,7 @@
         function loadSavedSettings() {
             // Load GPT settings
             const gptSettings = localStorage.getItem('gptSettings');
-            if (gptSettings) {
-                const settings = JSON.parse(gptSettings);
+            if (gptSettings) {                const settings = JSON.parse(gptSettings);
                 const modelSelect = document.getElementById('gptModel');
                 const tempSlider = document.getElementById('gptTemperature');
                 const customInstructions = document.getElementById('customInstructions');
