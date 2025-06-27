@@ -12,8 +12,10 @@ export interface GmailConfig {
 export class GmailIntegration {
   private oauth2Client: OAuth2Client;
   private gmail: any;
+  private config: GmailConfig;
 
   constructor(config: GmailConfig) {
+    this.config = config;
     this.oauth2Client = new google.auth.OAuth2(
       config.clientId,
       config.clientSecret,
@@ -33,7 +35,7 @@ export class GmailIntegration {
     console.log('🔍 OAuth2Client configuration:', {
       clientId: this.oauth2Client._clientId?.substring(0, 30) + '...',
       clientSecret: this.oauth2Client._clientSecret ? 'SET' : 'MISSING',
-      redirectUri: config.redirectUri
+      redirectUri: this.config.redirectUri
     });
 
     const authUrl = this.oauth2Client.generateAuthUrl({
