@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { Pool } from '@neondatabase/serverless';
-import * as schema from '../shared/schema';
+import { users, children, emails, events, notifications } from '../shared/schema';
 
 // Check if we have a database URL
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -16,7 +16,7 @@ if (!DATABASE_URL) {
 // Create database connection or mock
 export const db = DATABASE_URL 
   ? drizzle(new Pool({ connectionString: DATABASE_URL }), { 
-      schema,
+      schema: { users, children, emails, events, notifications },
       logger: process.env.NODE_ENV === 'development'
     })
   : {
