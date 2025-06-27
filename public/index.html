@@ -370,9 +370,9 @@ Focus on actionable items and important deadlines.</textarea>
                     <button id="connectGmailBtn" class="btn" onclick="connectGmail()">Connect Gmail Account</button>
                     <button id="syncGmailBtn" class="btn btn-secondary" onclick="syncGmail()" style="display: none;">Sync Now</button>
                     <button id="startMonitoringBtn" class="btn btn-secondary" onclick="startGmailMonitoring()" style="display: none;">Start Auto-Monitoring</button>
-                    
+
                     <div id="gmailSyncResults" style="margin-top: 15px;"></div>
-                    
+
                     <div class="form-group" style="margin-top: 20px;">
                         <label>
                             <input type="checkbox" id="autoSync" onchange="toggleAutoSync()">
@@ -449,29 +449,38 @@ Focus on actionable items and important deadlines.</textarea>
             }
         }
 
-        // Dashboard functions
         function loadDashboard() {
-            fetch('/api/events')
-                .then(response => response.json())
-                .then(events => {
-                    const today = new Date().toISOString().split('T')[0];
-                    const todayEvents = events.filter(event => 
-                        event.eventDate === today
-                    );
+            const dashboardElement = document.getElementById('dashboardContent');
+            if (!dashboardElement) {
+                console.error('Dashboard element not found');
+                return;
+            }
 
-                    const todayContainer = document.getElementById('todayEvents');
-                    if (todayEvents.length > 0) {
-                        todayContainer.innerHTML = todayEvents.map(event => 
-                            `<div class="event-item">
-                                <div>
-                                    <div class="event-title">${event.title}</div>
-                                    <div class="event-description">${event.description || ''}</div>
-                                </div>
-                            </div>`
-                        ).join('');
+            fetch('/api/health')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
+                    return response.json();
                 })
-                .catch(error => console.error('Error loading dashboard:', error));
+                .then(data => {
+                    dashboardElement.innerHTML = `
+                        <div class="card">
+                            <h3>System Status</h3>
+                            <p>✅ Server is running</p>
+                            <p>Last updated: ${data.timestamp}</p>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error loading dashboard:', error);
+                    dashboardElement.innerHTML = `
+                        <div class="card">
+                            <h3>System Status</h3>
+                            <p>❌ Server connection failed: ${error.message}</p>
+                        </div>
+                    `;
+                });
         }
 
         // Children management
@@ -684,7 +693,7 @@ Focus on actionable items and important deadlines.</textarea>
 
             const syncButton = document.getElementById('syncGmailBtn');
             const resultsDiv = document.getElementById('gmailSyncResults');
-            
+
             syncButton.disabled = true;
             syncButton.textContent = 'Syncing...';
             resultsDiv.innerHTML = '<p>🔄 Syncing Gmail...</p>';
@@ -784,35 +793,71 @@ Focus on actionable items and important deadlines.</textarea>
                 const tokens = urlParams.get('tokens');
                 localStorage.setItem('gmailTokens', tokens);
                 checkGmailConnection(); // Refresh status
-                
+
                 // Clean up URL
                 window.history.replaceState({}, document.title, window.location.pathname);
-                
+
                 alert('Gmail connected successfully!');
             } else if (urlParams.get('error')) {
                 // Handle OAuth errors
                 const error = urlParams.get('error');
                 const details = urlParams.get('details');
                 console.error('OAuth Error:', error, details);
-                
+
                 let errorMessage = 'Gmail connection failed: ' + error;
                 if (details) {
                     errorMessage += '\nDetails: ' + decodeURIComponent(details);
                 }
-                
+
                 alert(errorMessage);
-                
+
                 // Clean up URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         }
 
-        // Initialize the dashboard when page loads
+        // Load initial data when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing app...');
+
+            // Check if required DOM elements exist
+            const requiredElements = ['todayEvents', 'childrenList', 'eventsList'];
+            const missingElements = requiredElements.filter(id => !document.getElementById(id));
+
+            if (missingElements.length > 0) {
+                console.error('Missing required DOM elements:', missingElements);
+                return;
+            }
+
             showTab('dashboard');
             loadDashboard();
             loadSavedSettings();
             checkGmailConnection();
+
+            // Check for OAuth tokens or errors in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokens = urlParams.get('tokens');
+            const error = urlParams.get('error');
+
+            if (tokens) {
+                try {
+                    const parsedTokens = JSON.parse(decodeURIComponent(tokens));
+                    console.log('Gmail OAuth successful:', parsedTokens);
+                    alert('Gmail integration successful! You can now sync your emails.');
+                    // Clean up URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } catch (e) {
+                    console.error('Error parsing tokens:', e);
+                }
+            }
+
+            if (error) {
+                const details = urlParams.get('details');
+                console.error('Gmail OAuth error:', error, details);
+                alert(`Gmail integration failed: ${error}${details ? ' - ' + details : ''}`);
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         });
     </script>
 </body>

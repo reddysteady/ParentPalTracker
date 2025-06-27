@@ -76,17 +76,29 @@ router.get('/api/auth/google', async (req, res) => {
       hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
       hasRedirectUri: !!process.env.GOOGLE_REDIRECT_URI,
       clientIdLength: process.env.GOOGLE_CLIENT_ID?.length || 0,
-      redirectUri: process.env.GOOGLE_REDIRECT_URI
+      redirectUri: process.env.GOOGLE_REDIRECT_URI,
+      actualClientId: process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...',
+      actualSecret: process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'MISSING'
     });
+
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.error('❌ Missing OAuth credentials');
+      return res.status(500).json({ 
+        error: 'Missing OAuth credentials', 
+        details: 'GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set in environment' 
+      });
+    }
 
     const { createGmailService } = await import('./gmail-service');
     const gmailService = createGmailService();
     const authUrl = gmailService.getAuthUrl();
     
-    console.log('Generated auth URL:', authUrl);
+    console.log('Generated auth URL length:', authUrl.length);
+    console.log('Auth URL domain:', authUrl.substring(0, 50) + '...');
     res.redirect(authUrl);
   } catch (error) {
     console.error('❌ Failed to initiate Gmail OAuth:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ error: 'Failed to initiate Gmail OAuth', details: error.message });
   }
 });
