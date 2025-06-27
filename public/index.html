@@ -728,8 +728,14 @@
                     // Update Gmail connection status immediately
                     checkGmailConnection();
                     
-                    // Show success message
+                    // Show success alert (simple solution)
                     alert('Gmail connected successfully! You can now sync your emails.');
+                    
+                    // Clean up listener
+                    window.removeEventListener('message', messageListener);
+                } else if (event.data === 'gmail-error') {
+                    // Show error alert
+                    alert('Failed to connect Gmail. Please check the popup window for details.');
                     
                     // Clean up listener
                     window.removeEventListener('message', messageListener);

@@ -214,14 +214,14 @@ router.get('/api/auth/google/callback', async (req, res) => {
           }
           
           // Show success message before closing
-          document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px; background: #f0f8ff;"><h2 style="color: #28a745;">Gmail Connected Successfully!</h2><p>You can now close this window.</p><p style="font-size: 12px; color: #666;">This window will close automatically in 3 seconds.</p></div>';
+          document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px; background: #f0f8ff;"><h2 style="color: #28a745;">Gmail Connected Successfully!</h2><p>Closing window...</p></div>';
           console.log('Success message displayed');
           
-          // Close window after a brief delay
+          // Close window immediately after notification
           setTimeout(() => {
             console.log('Closing window');
             window.close();
-          }, 3000);
+          }, 500);
           
         } catch (error) {
           console.error('Error in OAuth callback script:', error);
