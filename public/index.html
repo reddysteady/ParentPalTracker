@@ -922,19 +922,32 @@
                     body: JSON.stringify({ tokens: gmailTokens })
                 });
 
+                if (!response.ok) {
+                    const errorResult = await response.json();
+                    if (errorResult.expired) {
+                        localStorage.removeItem('gmailTokens');
+                        checkGmailConnection(); // Update UI to show disconnected state
+                        updateStatus('✗ Gmail connection expired');
+                        alert('Your Gmail connection has expired. Please reconnect Gmail to continue syncing emails.');
+                        return;
+                    } else {
+                        updateStatus(`✗ Error: ${errorResult.error || 'Sync failed'}`);
+                        console.error('Sync error response:', errorResult);
+                        return;
+                    }
+                }
+
                 const result = await response.json();
                 if (result.success) {
                     updateStatus(`✓ ${result.message}`);
                     await loadEmailList();
+                    
+                    // Update statistics
+                    document.getElementById('emails-processed').textContent = result.processed || 0;
+                    document.getElementById('last-sync').textContent = new Date().toLocaleString();
                 } else {
-                    // Handle token expiration
-                    if (result.expired) {
-                        localStorage.removeItem('gmailTokens');
-                        checkGmailConnection(); // Update UI to show disconnected state
-                        alert('Your Gmail connection has expired. Please reconnect Gmail to continue syncing emails.');
-                    } else {
-                        updateStatus(`✗ Error: ${result.error}`);
-                    }
+                    updateStatus(`✗ Error: ${result.error}`);
+                    console.error('Sync failed:', result);
                 }
             } catch (error) {
                 console.error('Sync error:', error);

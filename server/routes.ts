@@ -332,9 +332,9 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
     console.log('📧 Gmail sync request for user:', userId);
     console.log('📧 Tokens provided:', !!tokens);
 
-    if (!tokens) {
-      console.log('❌ No Gmail tokens provided');
-      return res.status(400).json({ error: 'Gmail tokens required - please connect Gmail first' });
+    if (!tokens || !tokens.access_token) {
+      console.log('❌ No valid Gmail tokens provided');
+      return res.status(400).json({ error: 'Valid Gmail tokens required - please connect Gmail first' });
     }
 
     // Validate environment variables
@@ -345,6 +345,8 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
 
     console.log('📧 Creating Gmail service...');
     const gmailService = createGmailService();
+    
+    // Set tokens and validate them
     gmailService.setTokens(tokens);
 
     console.log('📧 Processing unread emails...');
@@ -359,19 +361,22 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
       errors: result.errors,
       message: `Processed ${result.processed} emails${result.errors > 0 ? `, ${result.errors} errors` : ''}`
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error syncing Gmail:', error);
     
-    // Check if error is due to token expiration
-    if (error.message.includes('invalid_grant') || error.message.includes('Token has been expired')) {
+    // Check if error is due to token expiration or authentication issues
+    if (error.message?.includes('invalid_grant') || 
+        error.message?.includes('Token has been expired') ||
+        error.message?.includes('authentication failed') ||
+        error.code === 401) {
       res.status(401).json({ 
-        error: 'Gmail tokens expired - please reconnect your Gmail account',
+        error: 'Gmail authentication failed - please reconnect your Gmail account',
         expired: true
       });
     } else {
       res.status(500).json({ 
         error: 'Failed to sync Gmail: ' + error.message,
-        details: error.stack
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }

@@ -132,8 +132,19 @@ export class GmailIntegration {
       );
 
       return emails.filter(email => email !== null);
-    } catch (error) {
-      console.error('Error searching Gmail:', error);
+    } catch (error: any) {
+      console.error('❌ Error searching Gmail:', {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        details: error.response?.data
+      });
+      
+      // Check for common authentication errors
+      if (error.code === 401 || error.message?.includes('invalid_grant') || error.message?.includes('unauthorized')) {
+        throw new Error('Gmail authentication failed - tokens may be expired or invalid');
+      }
+      
       throw error;
     }
   }
