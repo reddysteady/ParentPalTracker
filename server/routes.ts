@@ -70,33 +70,62 @@ router.get('/api/events', async (req, res) => {
 // Gmail OAuth flow endpoints
 router.get('/api/auth/google', async (req, res) => {
   try {
+    console.log('📧 Starting Gmail OAuth flow...');
+    console.log('Environment check:', {
+      hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+      hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+      hasRedirectUri: !!process.env.GOOGLE_REDIRECT_URI,
+      clientIdLength: process.env.GOOGLE_CLIENT_ID?.length || 0,
+      redirectUri: process.env.GOOGLE_REDIRECT_URI
+    });
+
     const { createGmailService } = await import('./gmail-service');
     const gmailService = createGmailService();
     const authUrl = gmailService.getAuthUrl();
+    
+    console.log('Generated auth URL:', authUrl);
     res.redirect(authUrl);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to initiate Gmail OAuth' });
+    console.error('❌ Failed to initiate Gmail OAuth:', error);
+    res.status(500).json({ error: 'Failed to initiate Gmail OAuth', details: error.message });
   }
 });
 
 router.get('/api/auth/google/callback', async (req, res) => {
   try {
-    const { code } = req.query;
+    console.log('📧 Gmail OAuth callback received');
+    console.log('Query params:', req.query);
+    
+    const { code, error, error_description } = req.query;
+    
+    if (error) {
+      console.error('❌ OAuth error from Google:', { error, error_description });
+      return res.redirect(`/?error=google_oauth_error&details=${encodeURIComponent(error_description || error)}`);
+    }
+    
     if (!code) {
+      console.error('❌ No authorization code received');
       return res.redirect('/?error=no_code');
     }
 
+    console.log('✅ Authorization code received, exchanging for tokens...');
     const { createGmailService } = await import('./gmail-service');
     const gmailService = createGmailService();
     const tokens = await gmailService.getTokens(code as string);
 
+    console.log('✅ Tokens received successfully');
     // In production, store these tokens securely in the database linked to user
     // For now, redirect back to frontend with tokens in URL (temporary solution)
     const tokensParam = encodeURIComponent(JSON.stringify(tokens));
     res.redirect(`/?tokens=${tokensParam}`);
   } catch (error) {
-    console.error('Gmail OAuth callback error:', error);
-    res.redirect('/?error=oauth_failed');
+    console.error('❌ Gmail OAuth callback error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.redirect(`/?error=oauth_failed&details=${encodeURIComponent(error.message)}`);
   }
 });
 

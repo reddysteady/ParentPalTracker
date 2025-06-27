@@ -208,5 +208,17 @@ export function createGmailService(): GmailIntegration {
     redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback'
   };
 
+  console.log('📧 Creating Gmail service with config:', {
+    hasClientId: !!config.clientId,
+    hasClientSecret: !!config.clientSecret,
+    redirectUri: config.redirectUri,
+    clientIdPreview: config.clientId ? `${config.clientId.substring(0, 10)}...` : 'MISSING'
+  });
+
+  if (!config.clientId || !config.clientSecret) {
+    console.error('❌ Missing required Gmail OAuth credentials');
+    throw new Error('Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET environment variables');
+  }
+
   return new GmailIntegration(config);
 }

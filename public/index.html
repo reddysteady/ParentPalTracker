@@ -789,6 +789,21 @@ Focus on actionable items and important deadlines.</textarea>
                 window.history.replaceState({}, document.title, window.location.pathname);
                 
                 alert('Gmail connected successfully!');
+            } else if (urlParams.get('error')) {
+                // Handle OAuth errors
+                const error = urlParams.get('error');
+                const details = urlParams.get('details');
+                console.error('OAuth Error:', error, details);
+                
+                let errorMessage = 'Gmail connection failed: ' + error;
+                if (details) {
+                    errorMessage += '\nDetails: ' + decodeURIComponent(details);
+                }
+                
+                alert(errorMessage);
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
         }
 
