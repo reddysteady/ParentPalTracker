@@ -1,5 +1,5 @@
 
-import { pgTable, serial, text, timestamp, integer, boolean, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, boolean, jsonb, serial } from 'drizzle-orm/pg-core';
 
 // Users table
 export const users = pgTable('users', {
@@ -16,7 +16,7 @@ export const users = pgTable('users', {
 // Children table
 export const children = pgTable('children', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
+  userId: integer('user_id').notNull().references(() => users.id),
   name: text('name').notNull(),
   school: text('school'),
   grade: text('grade'),
@@ -27,12 +27,11 @@ export const children = pgTable('children', {
 // Emails table
 export const emails = pgTable('emails', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
+  userId: integer('user_id').notNull().references(() => users.id),
   subject: text('subject').notNull(),
-  body: text('body').notNull(),
-  sender: text('sender').notNull(),
+  body: text('body'),
+  sender: text('sender'),
   receivedAt: timestamp('received_at').notNull(),
-  processed: boolean('processed').default(false),
   gmailMessageId: text('gmail_message_id'),
   createdAt: timestamp('created_at').defaultNow()
 });
@@ -40,7 +39,7 @@ export const emails = pgTable('emails', {
 // Events table
 export const events = pgTable('events', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
+  userId: integer('user_id').notNull().references(() => users.id),
   childId: integer('child_id').references(() => children.id),
   emailId: integer('email_id').references(() => emails.id),
   title: text('title').notNull(),
@@ -57,12 +56,12 @@ export const events = pgTable('events', {
 // Notifications table
 export const notifications = pgTable('notifications', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
+  userId: integer('user_id').notNull().references(() => users.id),
   eventId: integer('event_id').references(() => events.id),
-  type: text('type').notNull(),
+  type: text('type').notNull(), // 'sms', 'email', 'push'
   message: text('message').notNull(),
+  scheduled: timestamp('scheduled').notNull(),
+  sent: boolean('sent').default(false),
   sentAt: timestamp('sent_at'),
-  status: text('status').default('pending'),
-  externalId: text('external_id'),
   createdAt: timestamp('created_at').defaultNow()
 });
