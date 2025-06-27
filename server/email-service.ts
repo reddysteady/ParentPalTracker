@@ -17,6 +17,7 @@ export interface IncomingEmail {
   subject: string;
   body: string;
   receivedAt: Date;
+  messageId?: string; // Gmail message ID (optional for forwarded emails)
 }
 
 /**

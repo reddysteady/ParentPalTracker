@@ -150,11 +150,73 @@ export class GmailIntegration {
         from: from,
         subject: subject,
         body: body,
-        receivedAt: new Date(date || Date.now())
+        receivedAt: new Date(date || Date.now()),
+        messageId: message.id
       };
     } catch (error) {
       console.error('Error parsing Gmail message:', error);
       return null;
+    }
+  }
+
+  /**
+   * Process a Gmail email for the specified user
+   */
+  async processGmailEmail(userId: number, email: IncomingEmail): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { storage } = await import('./storage');
+      const { extractEventsFromEmail } = await import('./nlp');
+
+      // Store the raw email
+      const storedEmail = await storage.createEmail({
+        userId: userId,
+        subject: email.subject,
+        body: email.body,
+        sender: email.from,
+        receivedAt: email.receivedAt,
+        gmailMessageId: email.messageId,
+      });
+
+      console.log(`Gmail email stored for user ${userId}: ${email.subject}`);
+
+      // Extract events using OpenAI
+      const extractedEvents = await extractEventsFromEmail(email.subject, email.body);
+
+      const createdEvents = [];
+      for (const extractedEvent of extractedEvents) {
+        // Try to match child by name
+        let childId: number | undefined = undefined;
+        if (extractedEvent.childName) {
+          const children = await storage.getChildrenByUserId(userId);
+          const matchedChild = children.find(child => 
+            child.name.toLowerCase().includes(extractedEvent.childName!.toLowerCase())
+          );
+          childId = matchedChild?.id;
+        }
+
+        const eventData = {
+          userId: userId,
+          emailId: storedEmail.id,
+          childId: childId || null,
+          title: extractedEvent.title,
+          description: extractedEvent.description,
+          eventDate: extractedEvent.eventDate ? new Date(extractedEvent.eventDate) : null,
+          location: extractedEvent.location || null,
+          requiresAction: extractedEvent.requiresAction || false,
+          actionDeadline: extractedEvent.actionDeadline ? new Date(extractedEvent.actionDeadline) : null,
+          extractedData: extractedEvent,
+        };
+
+        const event = await storage.createEvent(eventData);
+        createdEvents.push(event);
+
+        console.log(`Event created: ${event.title} for ${event.eventDate ? new Date(event.eventDate).toDateString() : 'No date'}`);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error processing Gmail email:', error);
+      return { success: false, error: error.message };
     }
   }
 
@@ -186,17 +248,17 @@ export class GmailIntegration {
 
       for (const email of emails) {
         try {
-          const result = await processIncomingEmail(email);
+          const result = await this.processGmailEmail(userId, email);
           if (result.success) {
             processed++;
-            console.log(`Processed email: ${email.subject}`);
+            console.log(`Processed Gmail email: ${email.subject}`);
           } else {
             errors++;
-            console.error(`Failed to process email: ${email.subject}`, result.error);
+            console.error(`Failed to process Gmail email: ${email.subject}`, result.error);
           }
         } catch (error) {
           errors++;
-          console.error('Error processing email:', error);
+          console.error('Error processing Gmail email:', error);
         }
       }
 
