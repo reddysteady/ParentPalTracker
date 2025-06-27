@@ -918,14 +918,22 @@
         }
 
         function checkGmailConnection() {
+            // Force clear any invalid tokens first
+            const rawTokens = localStorage.getItem('gmailTokens');
+            if (rawTokens === 'null' || rawTokens === '{}' || rawTokens === 'undefined') {
+                localStorage.removeItem('gmailTokens');
+            }
+            
+            // Get fresh token value after cleanup
             const tokens = localStorage.getItem('gmailTokens');
             const statusElement = document.getElementById('gmailStatus');
             const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
             const syncButtons = document.querySelectorAll('button[onclick="syncGmail()"]');
             
-            console.log('Checking Gmail connection:', { 
-                tokens: !!tokens, 
-                rawTokens: tokens ? tokens.substring(0, 50) + '...' : 'null',
+            console.log('Gmail connection check:', { 
+                rawTokens: rawTokens,
+                cleanedTokens: tokens,
+                hasTokens: !!tokens,
                 connectButtons: connectButtons.length, 
                 syncButtons: syncButtons.length 
             });
@@ -1117,11 +1125,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing app...');
 
-            // Clear any invalid cached tokens
-            const tokens = localStorage.getItem('gmailTokens');
-            if (tokens && (tokens === 'null' || tokens === '{}' || tokens === 'undefined')) {
-                localStorage.removeItem('gmailTokens');
-            }
+            // FORCE CLEAR ALL localStorage to ensure fresh state (temporary debug)
+            console.log('localStorage before clear:', localStorage.getItem('gmailTokens'));
+            localStorage.removeItem('gmailTokens');
+            console.log('localStorage after clear:', localStorage.getItem('gmailTokens'));
 
             // Show dashboard by default
             showTab('dashboard');
