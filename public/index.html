@@ -471,6 +471,9 @@
 
         // Tab navigation function
         function showTab(tabName) {
+            // Store current tab in localStorage
+            localStorage.setItem('currentTab', tabName);
+            
             // Hide all tab contents
             const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => {
@@ -1131,8 +1134,10 @@
                 console.log('Cleared invalid cached tokens');
             }
 
-            // Show dashboard by default
-            showTab('dashboard');
+            // Show dashboard by default, but preserve current tab if already set
+            const urlParams = new URLSearchParams(window.location.hash.substring(1));
+            const currentTab = urlParams.get('tab') || localStorage.getItem('currentTab') || 'dashboard';
+            showTab(currentTab);
 
             // Check Gmail connection status
             checkGmailConnection();
