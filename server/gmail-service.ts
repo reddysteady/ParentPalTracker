@@ -86,6 +86,20 @@ export class GmailIntegration {
   }
 
   /**
+   * Refresh expired access token using refresh token
+   */
+  async refreshTokens(): Promise<any> {
+    try {
+      const { credentials } = await this.oauth2Client.refreshAccessToken();
+      this.oauth2Client.setCredentials(credentials);
+      return credentials;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      throw new Error('Failed to refresh access token. Please re-authenticate.');
+    }
+  }
+
+  /**
    * Search for unread school emails using Gmail filters
    */
   async searchSchoolEmails(userId?: number, query?: string): Promise<any[]> {

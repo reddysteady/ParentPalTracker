@@ -834,6 +834,7 @@
                 
                 const emails = await response.json();
                 console.log('Loaded emails:', emails.length);
+                console.log('Sample email structure:', emails[0]);
 
                 if (emails.length === 0) {
                     emailList.innerHTML = '<div class="loading">No emails synced yet. Click "Sync Emails" to get started.</div>';
