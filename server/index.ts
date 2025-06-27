@@ -76,7 +76,7 @@ app.use((req, res, next) => {
   }
 });
 
-const server = app.listen(PORT, "0.0.0.0", () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 ParentPal server running on port ${PORT}`);
   console.log(
     `📧 Ready to process school emails and manage parenting schedules`,
