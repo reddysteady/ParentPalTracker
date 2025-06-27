@@ -1,0 +1,659 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParentPal - Smart Parenting Assistant</title>
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background: #f3f4f6;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .event-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .event-date {
+            font-weight: 600;
+            color: #2563eb;
+        }
+        
+        .event-title {
+            font-weight: 500;
+            margin: 5px 0;
+        }
+        
+        .event-description {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .settings-section {
+            margin-bottom: 30px;
+        }
+        
+        .settings-section h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍼 ParentPal</h1>
+            <p>Your intelligent parenting assistant</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+            <button class="tab" onclick="showTab('children')">👶 Children</button>
+            <button class="tab" onclick="showTab('emails')">📧 Email Processing</button>
+            <button class="tab" onclick="showTab('events')">📅 Events</button>
+            <button class="tab" onclick="showTab('settings')">⚙️ AI Settings</button>
+        </div>
+        
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Dashboard</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>📈 Today's Summary</h3>
+                    <p>No events scheduled for today</p>
+                    <div id="todayEvents"></div>
+                </div>
+                <div class="card">
+                    <h3>🔔 Recent Notifications</h3>
+                    <p>All caught up!</p>
+                    <div id="recentNotifications"></div>
+                </div>
+                <div class="card">
+                    <h3>📊 Weekly Overview</h3>
+                    <p>3 events this week</p>
+                    <div id="weeklyStats"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Children Tab -->
+        <div id="children" class="tab-content">
+            <h2>Children Profiles</h2>
+            <form onsubmit="addChild(event)">
+                <div class="form-group">
+                    <label for="childName">Child's Name</label>
+                    <input type="text" id="childName" required>
+                </div>
+                <div class="form-group">
+                    <label for="childGrade">Grade/Age</label>
+                    <input type="text" id="childGrade">
+                </div>
+                <div class="form-group">
+                    <label for="childSchool">School</label>
+                    <input type="text" id="childSchool">
+                </div>
+                <button type="submit" class="btn">Add Child</button>
+            </form>
+            <div id="childrenList" class="grid">
+                <!-- Children will be displayed here -->
+            </div>
+        </div>
+        
+        <!-- Email Processing Tab -->
+        <div id="emails" class="tab-content">
+            <h2>Email Processing</h2>
+            <div class="card">
+                <h3>📧 Process School Email</h3>
+                <form onsubmit="processEmail(event)">
+                    <div class="form-group">
+                        <label for="emailSubject">Email Subject</label>
+                        <input type="text" id="emailSubject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailSender">Sender</label>
+                        <input type="email" id="emailSender" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailContent">Email Content</label>
+                        <textarea id="emailContent" rows="6" required placeholder="Paste the school email content here..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">Process Email with AI</button>
+                </form>
+            </div>
+            <div id="emailResults"></div>
+        </div>
+        
+        <!-- Events Tab -->
+        <div id="events" class="tab-content">
+            <h2>Events & Timeline</h2>
+            <div class="card">
+                <h3>📅 Upcoming Events</h3>
+                <div id="eventsList">
+                    <!-- Events will be displayed here -->
+                </div>
+            </div>
+            <div class="card">
+                <h3>➕ Add Manual Event</h3>
+                <form onsubmit="addEvent(event)">
+                    <div class="form-group">
+                        <label for="eventTitle">Event Title</label>
+                        <input type="text" id="eventTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventDate">Date</label>
+                        <input type="date" id="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventTime">Time</label>
+                        <input type="time" id="eventTime">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventDescription">Description</label>
+                        <textarea id="eventDescription" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Add Event</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- AI Settings Tab -->
+        <div id="settings" class="tab-content">
+            <h2>AI Configuration</h2>
+            
+            <div class="settings-section">
+                <h3>🤖 GPT Settings</h3>
+                <form onsubmit="saveGPTSettings(event)">
+                    <div class="form-group">
+                        <label for="gptModel">GPT Model</label>
+                        <select id="gptModel">
+                            <option value="gpt-4">GPT-4 (Recommended)</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gptTemperature">Creativity Level</label>
+                        <input type="range" id="gptTemperature" min="0" max="1" step="0.1" value="0.3">
+                        <small>Lower = More precise, Higher = More creative</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="customInstructions">Custom Instructions</label>
+                        <textarea id="customInstructions" rows="6" placeholder="Add specific instructions for how the AI should process your school emails and extract events...">You are ParentPal, an AI assistant helping parents manage school communications and events. 
+
+When processing school emails:
+1. Extract all event details (dates, times, requirements)
+2. Identify any preparation needed
+3. Note cancellations or changes
+4. Be precise with dates and times
+5. Include contact information if provided
+
+Focus on actionable items and important deadlines.</textarea>
+                    </div>
+                    <button type="submit" class="btn">Save AI Settings</button>
+                </form>
+            </div>
+            
+            <div class="settings-section">
+                <h3>🔔 Notification Preferences</h3>
+                <form onsubmit="saveNotificationSettings(event)">
+                    <div class="form-group">
+                        <label for="notificationEmail">Email for Notifications</label>
+                        <input type="email" id="notificationEmail">
+                    </div>
+                    <div class="form-group">
+                        <label for="notificationPhone">Phone for SMS</label>
+                        <input type="tel" id="notificationPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="dailyDigest" checked>
+                            Send daily digest
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="urgentAlerts" checked>
+                            Urgent alerts (same day events)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn">Save Notifications</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Load tab-specific data
+            loadTabData(tabName);
+        }
+        
+        // Load data for specific tabs
+        function loadTabData(tabName) {
+            switch(tabName) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'children':
+                    loadChildren();
+                    break;
+                case 'events':
+                    loadEvents();
+                    break;
+            }
+        }
+        
+        // Dashboard functions
+        function loadDashboard() {
+            fetch('/api/events')
+                .then(response => response.json())
+                .then(events => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const todayEvents = events.filter(event => 
+                        event.eventDate === today
+                    );
+                    
+                    const todayContainer = document.getElementById('todayEvents');
+                    if (todayEvents.length > 0) {
+                        todayContainer.innerHTML = todayEvents.map(event => 
+                            `<div class="event-item">
+                                <div>
+                                    <div class="event-title">${event.title}</div>
+                                    <div class="event-description">${event.description || ''}</div>
+                                </div>
+                            </div>`
+                        ).join('');
+                    }
+                })
+                .catch(error => console.error('Error loading dashboard:', error));
+        }
+        
+        // Children management
+        function addChild(event) {
+            event.preventDefault();
+            
+            const childData = {
+                name: document.getElementById('childName').value,
+                grade: document.getElementById('childGrade').value,
+                school: document.getElementById('childSchool').value
+            };
+            
+            fetch('/api/children', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(childData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Child added successfully!');
+                event.target.reset();
+                loadChildren();
+            })
+            .catch(error => {
+                console.error('Error adding child:', error);
+                alert('Error adding child');
+            });
+        }
+        
+        function loadChildren() {
+            fetch('/api/children')
+                .then(response => response.json())
+                .then(children => {
+                    const container = document.getElementById('childrenList');
+                    container.innerHTML = children.map(child => 
+                        `<div class="card">
+                            <h3>${child.name}</h3>
+                            <p><strong>Grade:</strong> ${child.grade || 'Not specified'}</p>
+                            <p><strong>School:</strong> ${child.school || 'Not specified'}</p>
+                        </div>`
+                    ).join('');
+                })
+                .catch(error => console.error('Error loading children:', error));
+        }
+        
+        // Email processing
+        function processEmail(event) {
+            event.preventDefault();
+            
+            const emailData = {
+                subject: document.getElementById('emailSubject').value,
+                sender: document.getElementById('emailSender').value,
+                content: document.getElementById('emailContent').value,
+                receivedDate: new Date().toISOString()
+            };
+            
+            // Show processing message
+            const resultsDiv = document.getElementById('emailResults');
+            resultsDiv.innerHTML = '<div class="card"><p>🤖 Processing email with AI...</p></div>';
+            
+            fetch('/api/emails', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(emailData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultsDiv.innerHTML = `
+                    <div class="card">
+                        <h3>✅ Email Processed Successfully</h3>
+                        <p><strong>Subject:</strong> ${emailData.subject}</p>
+                        <p><strong>From:</strong> ${emailData.sender}</p>
+                        <p><strong>Status:</strong> Events extracted and added to timeline</p>
+                    </div>
+                `;
+                event.target.reset();
+                loadEvents(); // Refresh events list
+            })
+            .catch(error => {
+                console.error('Error processing email:', error);
+                resultsDiv.innerHTML = '<div class="card"><p>❌ Error processing email</p></div>';
+            });
+        }
+        
+        // Events management
+        function addEvent(event) {
+            event.preventDefault();
+            
+            const eventData = {
+                title: document.getElementById('eventTitle').value,
+                eventDate: document.getElementById('eventDate').value,
+                eventTime: document.getElementById('eventTime').value,
+                description: document.getElementById('eventDescription').value,
+                source: 'manual'
+            };
+            
+            fetch('/api/events', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(eventData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Event added successfully!');
+                event.target.reset();
+                loadEvents();
+            })
+            .catch(error => {
+                console.error('Error adding event:', error);
+                alert('Error adding event');
+            });
+        }
+        
+        function loadEvents() {
+            fetch('/api/events')
+                .then(response => response.json())
+                .then(events => {
+                    const container = document.getElementById('eventsList');
+                    
+                    if (events.length === 0) {
+                        container.innerHTML = '<p>No events found. Process some school emails to get started!</p>';
+                        return;
+                    }
+                    
+                    // Sort events by date
+                    events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+                    
+                    container.innerHTML = events.map(event => 
+                        `<div class="event-item">
+                            <div>
+                                <div class="event-date">${event.eventDate} ${event.eventTime || ''}</div>
+                                <div class="event-title">${event.title}</div>
+                                <div class="event-description">${event.description || ''}</div>
+                            </div>
+                            <div class="status-indicator"></div>
+                        </div>`
+                    ).join('');
+                })
+                .catch(error => console.error('Error loading events:', error));
+        }
+        
+        // Settings functions
+        function saveGPTSettings(event) {
+            event.preventDefault();
+            
+            const settings = {
+                model: document.getElementById('gptModel').value,
+                temperature: parseFloat(document.getElementById('gptTemperature').value),
+                customInstructions: document.getElementById('customInstructions').value
+            };
+            
+            localStorage.setItem('gptSettings', JSON.stringify(settings));
+            alert('GPT settings saved successfully!');
+        }
+        
+        function saveNotificationSettings(event) {
+            event.preventDefault();
+            
+            const settings = {
+                email: document.getElementById('notificationEmail').value,
+                phone: document.getElementById('notificationPhone').value,
+                dailyDigest: document.getElementById('dailyDigest').checked,
+                urgentAlerts: document.getElementById('urgentAlerts').checked
+            };
+            
+            localStorage.setItem('notificationSettings', JSON.stringify(settings));
+            alert('Notification settings saved successfully!');
+        }
+        
+        // Load saved settings on page load
+        function loadSavedSettings() {
+            // Load GPT settings
+            const gptSettings = localStorage.getItem('gptSettings');
+            if (gptSettings) {
+                const settings = JSON.parse(gptSettings);
+                document.getElementById('gptModel').value = settings.model || 'gpt-4';
+                document.getElementById('gptTemperature').value = settings.temperature || 0.3;
+                document.getElementById('customInstructions').value = settings.customInstructions || '';
+            }
+            
+            // Load notification settings
+            const notificationSettings = localStorage.getItem('notificationSettings');
+            if (notificationSettings) {
+                const settings = JSON.parse(notificationSettings);
+                document.getElementById('notificationEmail').value = settings.email || '';
+                document.getElementById('notificationPhone').value = settings.phone || '';
+                document.getElementById('dailyDigest').checked = settings.dailyDigest !== false;
+                document.getElementById('urgentAlerts').checked = settings.urgentAlerts !== false;
+            }
+        }
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedSettings();
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>
