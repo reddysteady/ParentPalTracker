@@ -7,39 +7,7 @@ import { emailService } from './email-service';
 
 const router = Router();
 
-// Monkey-patch router methods for debugging
-const originalRouterMethods = {
-  get: router.get.bind(router),
-  post: router.post.bind(router),
-  use: router.use.bind(router)
-};
-
-router.get = function(path: any, ...handlers: any[]) {
-  console.log('🔍 router.get() called with:', { path, pathType: typeof path, pathValue: JSON.stringify(path) });
-  if (path === '' || path === undefined || path === null) {
-    console.error('❌ INVALID PATH in router.get():', path);
-    console.trace('Stack trace for invalid router.get()');
-  }
-  return originalRouterMethods.get(path, ...handlers);
-};
-
-router.post = function(path: any, ...handlers: any[]) {
-  console.log('🔍 router.post() called with:', { path, pathType: typeof path, pathValue: JSON.stringify(path) });
-  if (path === '' || path === undefined || path === null) {
-    console.error('❌ INVALID PATH in router.post():', path);
-    console.trace('Stack trace for invalid router.post()');
-  }
-  return originalRouterMethods.post(path, ...handlers);
-};
-
-router.use = function(path: any, ...handlers: any[]) {
-  console.log('🔍 router.use() called with:', { path, pathType: typeof path, pathValue: JSON.stringify(path) });
-  if (path === '' || path === undefined || path === null) {
-    console.error('❌ INVALID PATH in router.use():', path);
-    console.trace('Stack trace for invalid router.use()');
-  }
-  return originalRouterMethods.use(path, ...handlers);
-};
+// Clean router setup
 
 // Health check endpoint
 router.get('/api/health', (req, res) => {
@@ -288,5 +256,4 @@ router.post('/api/gmail/monitor/:userId', async (req, res) => {
   }
 });
 
-console.log('EXPORTING ROUTER:', router.stack.map(r => r.route && r.route.path));
 export default router;

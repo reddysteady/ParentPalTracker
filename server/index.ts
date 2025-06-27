@@ -7,7 +7,7 @@ import path from "path";
 import routes from "./routes";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || '5000', 10);
 
 // Middleware
 app.use(cors());
@@ -41,43 +41,10 @@ if (missingEnvVars.length > 0 && process.env.NODE_ENV === "production") {
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, "../public")));
 
-// Monkey-patch logging for route registration debugging
-const originalMethods = {
-  appGet: app.get.bind(app),
-  appPost: app.post.bind(app),
-  appUse: app.use.bind(app)
-};
-
-app.get = function(path: any, ...handlers: any[]) {
-  console.log('🔍 app.get() called with:', { path, pathType: typeof path, pathValue: JSON.stringify(path) });
-  if (path === '' || path === undefined || path === null) {
-    console.error('❌ INVALID PATH in app.get():', path);
-    console.trace('Stack trace for invalid app.get()');
-  }
-  return originalMethods.appGet(path, ...handlers);
-};
-
-app.post = function(path: any, ...handlers: any[]) {
-  console.log('🔍 app.post() called with:', { path, pathType: typeof path, pathValue: JSON.stringify(path) });
-  if (path === '' || path === undefined || path === null) {
-    console.error('❌ INVALID PATH in app.post():', path);
-    console.trace('Stack trace for invalid app.post()');
-  }
-  return originalMethods.appPost(path, ...handlers);
-};
-
-app.use = function(path: any, ...handlers: any[]) {
-  console.log('🔍 app.use() called with:', { path, pathType: typeof path, pathValue: JSON.stringify(path) });
-  if (path === '' || path === undefined || path === null) {
-    console.error('❌ INVALID PATH in app.use():', path);
-    console.trace('Stack trace for invalid app.use()');
-  }
-  return originalMethods.appUse(path, ...handlers);
-};
+// Clean route mounting without debugging
 
 // API Routes
-console.log('ATTACHING ROUTES:', routes);
-app.use(routes);
+app.use('/', routes);
 
 // Global error handling middleware
 app.use(
