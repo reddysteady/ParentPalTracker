@@ -106,6 +106,12 @@ Return only valid JSON array, no other text:
   } catch (error: any) {
     console.error('Error extracting events with OpenAI:', error.message);
     
+    // Check if it's a rate limit error
+    if (error.message.includes('Rate limit reached')) {
+      console.log('OpenAI rate limit reached, using intelligent fallback parsing');
+      return parseEmailWithFallback(subject, body);
+    }
+    
     // Fallback: create a basic event from subject line
     const fallbackEvent: ExtractedEvent = {
       title: subject,
@@ -115,9 +121,90 @@ Return only valid JSON array, no other text:
       isCanceled: false,
     };
 
-    console.log('Using fallback event extraction');
+    console.log('Using basic fallback event extraction');
     return [fallbackEvent];
   }
+}
+
+/**
+ * Intelligent fallback parsing when OpenAI is unavailable
+ */
+function parseEmailWithFallback(subject: string, body: string): ExtractedEvent[] {
+  console.log('Using intelligent fallback parsing for:', subject);
+  
+  const events: ExtractedEvent[] = [];
+  const combinedText = `${subject} ${body}`.toLowerCase();
+  
+  // Common event keywords and patterns
+  const eventKeywords = [
+    'field trip', 'fieldtrip', 'trip', 'excursion',
+    'match', 'game', 'tournament', 'competition',
+    'concert', 'recital', 'performance', 'show',
+    'meeting', 'conference', 'assembly',
+    'deadline', 'due date', 'submission',
+    'event', 'activity', 'celebration',
+    'picture day', 'photo day',
+    'sports day', 'track and field',
+    'graduation', 'ceremony'
+  ];
+  
+  // Check if this looks like an event email
+  const hasEventKeyword = eventKeywords.some(keyword => combinedText.includes(keyword));
+  
+  if (hasEventKeyword) {
+    // Extract date patterns (basic regex)
+    const datePatterns = [
+      /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+\d{4}/gi,
+      /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}/g,
+      /\b\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/g
+    ];
+    
+    let extractedDate = null;
+    for (const pattern of datePatterns) {
+      const match = body.match(pattern);
+      if (match) {
+        try {
+          extractedDate = new Date(match[0]).toISOString().split('T')[0];
+          break;
+        } catch {
+          // Invalid date format, continue
+        }
+      }
+    }
+    
+    // Extract child names (look for common name patterns)
+    const namePattern = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g;
+    const possibleNames = body.match(namePattern) || [];
+    const childName = possibleNames.find(name => 
+      name.length > 2 && name.length < 20 && !['School', 'Dear', 'From', 'To', 'Date'].includes(name)
+    );
+    
+    const event: ExtractedEvent = {
+      title: subject,
+      description: body.substring(0, 300),
+      eventDate: extractedDate || new Date().toISOString().split('T')[0],
+      childName: childName,
+      requiresAction: combinedText.includes('deadline') || combinedText.includes('due') || combinedText.includes('submit'),
+      isCanceled: combinedText.includes('cancel') || combinedText.includes('postpone')
+    };
+    
+    events.push(event);
+    console.log(`Fallback parsing extracted 1 event: ${event.title}`);
+  } else {
+    // Store as general communication
+    const event: ExtractedEvent = {
+      title: subject,
+      description: body.substring(0, 300),
+      eventDate: new Date().toISOString().split('T')[0],
+      requiresAction: false,
+      isCanceled: false
+    };
+    
+    events.push(event);
+    console.log('Fallback parsing stored as general communication');
+  }
+  
+  return events;
 }
 
 /**
