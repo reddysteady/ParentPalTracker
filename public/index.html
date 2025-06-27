@@ -923,7 +923,18 @@
             console.log('Checking Gmail connection:', { tokens: !!tokens, connectButtons: connectButtons.length, syncButtons: syncButtons.length });
 
             if (statusElement) {
-                if (tokens) {
+                // Parse and validate tokens
+                let validTokens = false;
+                try {
+                    if (tokens && tokens !== 'null' && tokens !== '{}') {
+                        const parsedTokens = JSON.parse(tokens);
+                        validTokens = parsedTokens && parsedTokens.access_token;
+                    }
+                } catch (e) {
+                    validTokens = false;
+                }
+                
+                if (validTokens) {
                     statusElement.innerHTML = `
                         <div class="alert alert-success">
                             <span class="status-indicator status-connected"></span>
