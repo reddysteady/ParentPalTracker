@@ -52,6 +52,19 @@ export class GmailIntegration {
    */
   setTokens(tokens: any) {
     this.oauth2Client.setCredentials(tokens);
+    
+    // Set up automatic token refresh
+    this.oauth2Client.on('tokens', (newTokens) => {
+      if (newTokens.refresh_token) {
+        // In production, save the new refresh token to database
+        console.log('🔄 New refresh token received');
+      }
+      if (newTokens.access_token) {
+        console.log('🔄 Access token refreshed automatically');
+        // In production, save the new access token to database
+      }
+    });
+    
     this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
   }
 
