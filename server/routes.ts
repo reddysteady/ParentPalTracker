@@ -1,4 +1,4 @@
-import express, { Router } from 'express';
+import express, { Router, Request, Response } from 'express';
 import { db } from './db';
 import { users, children, emails, events, notifications } from '../shared/schema';
 import { eq } from 'drizzle-orm';
@@ -125,7 +125,7 @@ router.post('/api/events', async (req, res) => {
 });
 
 // Debug endpoint for OAuth troubleshooting
-router.get('/api/debug/oauth', (req, res) => {
+router.get('/api/debug/oauth', (req: Request, res: Response) => {
   console.log('🔍 Environment validation:', {
     hasClientId: !!process.env.GOOGLE_CLIENT_ID,
     hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
@@ -254,4 +254,5 @@ router.post('/api/gmail/monitor/:userId', async (req, res) => {
   }
 });
 
+console.log('EXPORTING ROUTER:', router.stack.map(r => r.route && r.route.path));
 export default router;

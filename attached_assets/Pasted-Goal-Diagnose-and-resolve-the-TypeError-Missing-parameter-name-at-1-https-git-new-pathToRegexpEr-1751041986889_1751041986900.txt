@@ -1,0 +1,50 @@
+Goal
+Diagnose and resolve the TypeError: Missing parameter name at 1: https://git.new/pathToRegexpError that occurs when starting the Express server. The agent should identify if any registered routes have malformed patterns, empty paths, or accidental variables missing names.
+
+Instructions
+Monkey-patch Logging:
+
+After creating the Express app and any router instances, monkey-patch the get, post, and use methods to log every route/path pattern being registered, including the stack trace.
+
+This will help locate malformed or empty paths that may trigger the path-to-regexp error.
+
+Startup Capture:
+
+Run the server as normal.
+
+Capture the full log of registered routes and any stack traces produced during registration.
+
+Source Search:
+
+Grep/search the repository for all occurrences of app.get, app.post, app.use, router.get, router.post, router.use.
+
+Check that every registered route has a non-empty, valid string path (e.g., no accidental app.get("") or router.get() without path).
+
+Specifically look for routes being registered with undefined, empty string, or non-string path arguments.
+
+Route Validation:
+
+For any suspicious registration (blank/undefined/non-string path, route with trailing colon/asterisk but no variable name, etc), provide the file name and line number.
+
+Suggest a correction for the route path as needed.
+
+Patch Plan:
+
+Propose a minimal patch set to fix all invalid route registrations in a single commit.
+
+Agent Output Format
+Route Registration Log:
+Log of all routes/middlewares registered, with stack traces if available.
+
+Suspicious Routes:
+List of any routes with malformed or missing path patterns, with file:line and explanation.
+
+Fix Plan (git-style diff):
+Patch blocks showing minimal corrections to route registrations.
+
+Additional Context
+The current stack trace references path-to-regexp and a missing parameter name, likely caused by an empty or malformed path string in a route.
+
+The routes module is imported and used with app.use(routes).
+
+The application logs an exported route list just before attaching the router.
