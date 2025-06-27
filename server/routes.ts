@@ -242,9 +242,47 @@ router.get('/api/auth/google/callback', async (req, res) => {
     });
     
     const errorMsg = (error.message || 'Unknown error').replace(/'/g, "\\'");
+    const isInvalidGrant = error.message?.includes('invalid_grant');
+    
     res.send(`
       <script>
-        document.body.innerHTML = '<div style="font-family: Arial; text-align: center; padding: 50px;"><h2>OAuth Error</h2><p>Failed to exchange authorization code: ${errorMsg}</p><p>Please check the console for details.</p></div>';
+        console.error('OAuth Error Details:', '${errorMsg}');
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'font-family: Arial; text-align: center; padding: 50px; background: #fff3cd; border: 1px solid #ffeaa7; max-width: 600px; margin: 50px auto; border-radius: 8px;';
+        
+        ${isInvalidGrant ? `
+          errorDiv.innerHTML = \`
+            <h2 style="color: #856404;">OAuth Configuration Issue</h2>
+            <p><strong>Invalid Grant Error</strong></p>
+            <p>This usually means there's a mismatch in the OAuth configuration.</p>
+            <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 4px; text-align: left;">
+              <h4>Possible solutions:</h4>
+              <ul style="text-align: left; margin: 10px 0;">
+                <li>Check that the redirect URI in Google Console exactly matches:<br>
+                    <code style="background: #e9ecef; padding: 2px 4px; word-break: break-all;">${process.env.GOOGLE_REDIRECT_URI}</code></li>
+                <li>Ensure the OAuth client ID and secret are correct</li>
+                <li>Try the OAuth flow again (codes expire quickly)</li>
+              </ul>
+            </div>
+            <p style="font-size: 12px; color: #666;">Error: ${errorMsg}</p>
+            <button onclick="window.close()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 10px;">Close Window</button>
+          \`;
+        ` : `
+          errorDiv.innerHTML = \`
+            <h2 style="color: #856404;">OAuth Error</h2>
+            <p>Failed to exchange authorization code</p>
+            <p style="font-size: 12px; color: #666;">Error: ${errorMsg}</p>
+            <button onclick="window.close()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 10px;">Close Window</button>
+          \`;
+        `}
+        
+        document.body.appendChild(errorDiv);
+        
+        // Notify parent window about the error
+        if (window.opener) {
+          window.opener.postMessage('gmail-error', '*');
+        }
       </script>
     `);
   }
