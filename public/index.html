@@ -399,11 +399,55 @@
                 </div>
             </div>
 
+            <!-- Email Settings Section -->
+            <div class="card">
+                <h3>⚙️ Email Processing Settings</h3>
+                
+                <!-- School Domains Section -->
+                <div style="margin-top: 20px;">
+                    <h4>School Email Domains</h4>
+                    <p style="color: #666; font-size: 14px; margin: 5px 0;">Add your school's email domains to filter and process only relevant emails. This helps reduce processing costs and improves accuracy.</p>
+                    
+                    <div style="display: flex; gap: 10px; margin: 15px 0;">
+                        <input type="text" id="domain-input" placeholder="e.g., hillviewschool.edu" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <button onclick="addDomain()" class="btn-primary">Add Domain</button>
+                    </div>
+                    <p style="color: #888; font-size: 12px;">Enter just the domain name (e.g., "school.edu" not "admin@school.edu")</p>
+                    
+                    <div style="margin-top: 15px;">
+                        <h5>Configured Domains:</h5>
+                        <div id="domains-container">
+                            <div class="loading">Loading domains...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Processing Statistics Section -->
+                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <h4>Email Processing Statistics</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: bold; color: #007bff;" id="emails-processed">0</div>
+                            <div style="font-size: 12px; color: #666;">Emails Processed</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: bold; color: #28a745;" id="events-extracted">0</div>
+                            <div style="font-size: 12px; color: #666;">Events Extracted</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: bold; color: #6c757d;" id="last-sync">Never</div>
+                            <div style="font-size: 12px; color: #666;">Last Sync</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <h3>ℹ️ How it works:</h3>
                 <ol style="margin-left: 20px; margin-top: 10px;">
                     <li>Connect your Gmail account securely</li>
-                    <li>We'll scan for school-related emails</li>
+                    <li>Configure your school's email domains above</li>
+                    <li>We'll scan for school-related emails from those domains</li>
                     <li>Events are automatically extracted and added to your calendar</li>
                     <li>You'll get smart notifications based on your parenting schedule</li>
                 </ol>
@@ -1037,7 +1081,8 @@
         function loadSavedSettings() {
             // Load GPT settings
             const gptSettings = localStorage.getItem('gptSettings');
-            if (gptSettings) {                const settings = JSON.parse(gptSettings);
+            if (gptSettings) {
+                const settings = JSON.parse(gptSettings);
                 const modelSelect = document.getElementById('gptModel');
                 const tempSlider = document.getElementById('gptTemperature');
                 const customInstructions = document.getElementById('customInstructions');
@@ -1123,6 +1168,119 @@
             }
         });
 
+        // Domain management functions
+        async function loadDomains() {
+            const container = document.getElementById('domains-container');
+            if (!container) return;
+
+            try {
+                const response = await fetch('/api/users/1/domains');
+                if (response.ok) {
+                    const user = await response.json();
+                    const domains = user.schoolDomains || [];
+                    
+                    if (domains.length === 0) {
+                        container.innerHTML = '<p style="color: #666; font-style: italic;">No domains configured yet. Add domains above to filter school emails.</p>';
+                    } else {
+                        container.innerHTML = domains.map(domain => 
+                            `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin: 5px 0;">
+                                <span style="font-family: monospace;">${domain}</span>
+                                <button onclick="removeDomain('${domain}')" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Remove</button>
+                            </div>`
+                        ).join('');
+                    }
+                } else {
+                    container.innerHTML = '<p style="color: #dc3545;">Failed to load domains</p>';
+                }
+            } catch (error) {
+                console.error('Error loading domains:', error);
+                container.innerHTML = '<p style="color: #dc3545;">Error loading domains</p>';
+            }
+        }
+
+        async function addDomain() {
+            const input = document.getElementById('domain-input');
+            const domain = input.value.trim();
+            
+            if (!domain) {
+                alert('Please enter a domain name');
+                return;
+            }
+            
+            // Basic domain validation
+            if (!domain.includes('.') || domain.includes('@') || domain.includes('http')) {
+                alert('Please enter a valid domain name (e.g., "school.edu")');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/users/1/domains', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ domain })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadDomains();
+                    alert('Domain added successfully!');
+                } else {
+                    const error = await response.text();
+                    alert('Failed to add domain: ' + error);
+                }
+            } catch (error) {
+                console.error('Error adding domain:', error);
+                alert('Error adding domain');
+            }
+        }
+
+        async function removeDomain(domain) {
+            if (!confirm(`Remove domain "${domain}"?`)) return;
+
+            try {
+                const response = await fetch('/api/users/1/domains', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ domain })
+                });
+                
+                if (response.ok) {
+                    loadDomains();
+                    alert('Domain removed successfully!');
+                } else {
+                    const error = await response.text();
+                    alert('Failed to remove domain: ' + error);
+                }
+            } catch (error) {
+                console.error('Error removing domain:', error);
+                alert('Error removing domain');
+            }
+        }
+
+        // Load processing statistics
+        async function loadProcessingStats() {
+            try {
+                const response = await fetch('/api/users/1/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    
+                    const emailsProcessed = document.getElementById('emails-processed');
+                    const eventsExtracted = document.getElementById('events-extracted');
+                    const lastSync = document.getElementById('last-sync');
+                    
+                    if (emailsProcessed) emailsProcessed.textContent = stats.emailsProcessed || 0;
+                    if (eventsExtracted) eventsExtracted.textContent = stats.eventsExtracted || 0;
+                    if (lastSync) lastSync.textContent = stats.lastSync || 'Never';
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing app...');
@@ -1141,6 +1299,12 @@
 
             // Check Gmail connection status
             checkGmailConnection();
+            
+            // Load domain settings and stats if Gmail tab is active
+            if (currentTab === 'gmail') {
+                loadDomains();
+                loadProcessingStats();
+            }
         });
 
         function updateStatus(message) {
