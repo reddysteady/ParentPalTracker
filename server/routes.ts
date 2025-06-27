@@ -83,7 +83,7 @@ router.get('/api/auth/google/callback', async (req, res) => {
   try {
     const { code } = req.query;
     if (!code) {
-      return res.status(400).json({ error: 'No authorization code provided' });
+      return res.redirect('/?error=no_code');
     }
 
     const { createGmailService } = await import('./gmail-service');
@@ -91,15 +91,12 @@ router.get('/api/auth/google/callback', async (req, res) => {
     const tokens = await gmailService.getTokens(code as string);
 
     // In production, store these tokens securely in the database linked to user
-    // For now, return them to the client
-    res.json({ 
-      success: true, 
-      message: 'Gmail connected successfully',
-      tokens: tokens
-    });
+    // For now, redirect back to frontend with tokens in URL (temporary solution)
+    const tokensParam = encodeURIComponent(JSON.stringify(tokens));
+    res.redirect(`/?tokens=${tokensParam}`);
   } catch (error) {
     console.error('Gmail OAuth callback error:', error);
-    res.status(500).json({ error: 'Failed to complete Gmail authorization' });
+    res.redirect('/?error=oauth_failed');
   }
 });
 

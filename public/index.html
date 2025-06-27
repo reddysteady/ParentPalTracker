@@ -362,6 +362,27 @@ Focus on actionable items and important deadlines.</textarea>
             </div>
 
             <div class="settings-section">
+                <h3>📧 Gmail Integration</h3>
+                <div class="card">
+                    <div id="gmailStatus">
+                        <p>Gmail connection status: <span id="gmailStatusText">Not connected</span></p>
+                    </div>
+                    <button id="connectGmailBtn" class="btn" onclick="connectGmail()">Connect Gmail Account</button>
+                    <button id="syncGmailBtn" class="btn btn-secondary" onclick="syncGmail()" style="display: none;">Sync Now</button>
+                    <button id="startMonitoringBtn" class="btn btn-secondary" onclick="startGmailMonitoring()" style="display: none;">Start Auto-Monitoring</button>
+                    
+                    <div id="gmailSyncResults" style="margin-top: 15px;"></div>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>
+                            <input type="checkbox" id="autoSync" onchange="toggleAutoSync()">
+                            Automatically sync Gmail every 5 minutes
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
                 <h3>🔔 Notification Preferences</h3>
                 <form onsubmit="saveNotificationSettings(event)">
                     <div class="form-group">
@@ -648,10 +669,134 @@ Focus on actionable items and important deadlines.</textarea>
             }
         }
 
+        // Gmail integration functions
+        function connectGmail() {
+            // Redirect to Gmail OAuth flow
+            window.location.href = '/api/auth/google';
+        }
+
+        function syncGmail() {
+            const tokens = localStorage.getItem('gmailTokens');
+            if (!tokens) {
+                alert('Please connect Gmail first');
+                return;
+            }
+
+            const syncButton = document.getElementById('syncGmailBtn');
+            const resultsDiv = document.getElementById('gmailSyncResults');
+            
+            syncButton.disabled = true;
+            syncButton.textContent = 'Syncing...';
+            resultsDiv.innerHTML = '<p>🔄 Syncing Gmail...</p>';
+
+            fetch('/api/gmail/sync/1', {  // Using user ID 1 for now
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tokens: JSON.parse(tokens) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultsDiv.innerHTML = `<p>✅ Sync completed: ${data.processed} emails processed</p>`;
+                    loadEvents(); // Refresh events
+                } else {
+                    resultsDiv.innerHTML = `<p>❌ Sync failed: ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Gmail sync error:', error);
+                resultsDiv.innerHTML = '<p>❌ Sync failed</p>';
+            })
+            .finally(() => {
+                syncButton.disabled = false;
+                syncButton.textContent = 'Sync Now';
+            });
+        }
+
+        function startGmailMonitoring() {
+            const tokens = localStorage.getItem('gmailTokens');
+            if (!tokens) {
+                alert('Please connect Gmail first');
+                return;
+            }
+
+            fetch('/api/gmail/monitor/1', {  // Using user ID 1 for now
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    tokens: JSON.parse(tokens),
+                    intervalMinutes: 5
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('gmailSyncResults').innerHTML = 
+                        '<p>✅ Auto-monitoring started (every 5 minutes)</p>';
+                    document.getElementById('autoSync').checked = true;
+                } else {
+                    alert('Failed to start monitoring: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Gmail monitoring error:', error);
+                alert('Failed to start monitoring');
+            });
+        }
+
+        function toggleAutoSync() {
+            const isChecked = document.getElementById('autoSync').checked;
+            if (isChecked) {
+                startGmailMonitoring();
+            }
+        }
+
+        function checkGmailConnection() {
+            // Check if we have tokens stored
+            const tokens = localStorage.getItem('gmailTokens');
+            const statusText = document.getElementById('gmailStatusText');
+            const connectBtn = document.getElementById('connectGmailBtn');
+            const syncBtn = document.getElementById('syncGmailBtn');
+            const monitorBtn = document.getElementById('startMonitoringBtn');
+
+            if (tokens) {
+                statusText.textContent = 'Connected ✅';
+                statusText.style.color = '#10b981';
+                connectBtn.textContent = 'Reconnect Gmail';
+                syncBtn.style.display = 'inline-block';
+                monitorBtn.style.display = 'inline-block';
+            } else {
+                statusText.textContent = 'Not connected ❌';
+                statusText.style.color = '#ef4444';
+                connectBtn.textContent = 'Connect Gmail Account';
+                syncBtn.style.display = 'none';
+                monitorBtn.style.display = 'none';
+            }
+
+            // Check URL for OAuth callback
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('tokens')) {
+                // This would be set by the OAuth callback page
+                const tokens = urlParams.get('tokens');
+                localStorage.setItem('gmailTokens', tokens);
+                checkGmailConnection(); // Refresh status
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                alert('Gmail connected successfully!');
+            }
+        }
+
         // Initialize the dashboard when page loads
         document.addEventListener('DOMContentLoaded', function() {
             showTab('dashboard');
             loadDashboard();
+            loadSavedSettings();
             checkGmailConnection();
         });
     </script>
