@@ -28,10 +28,17 @@ export async function processIncomingEmail(incomingEmail: IncomingEmail) {
     // Extract user ID from custom email address
     // e.g., ed@parentpal.app -> find user with customEmailAddress = "ed@parentpal.app"
     const users = await storage.getAllUsers(); // We need to add this method
-    const user = users.find(u => u.customEmailAddress === incomingEmail.to);
     
+    // Look up user by email address (try both primary email and custom email address)
+    let user = users.find(u => u.email === incomingEmail.from);
+
+    // If not found by primary email, try custom email address
     if (!user) {
-      console.error(`No user found for email address: ${incomingEmail.to}`);
+      user = users.find(u => u.customEmailAddress === incomingEmail.from);
+    }
+
+    if (!user) {
+      console.error(`No user found for email address: ${incomingEmail.from}`);
       return { success: false, error: 'User not found' };
     }
 
@@ -48,7 +55,7 @@ export async function processIncomingEmail(incomingEmail: IncomingEmail) {
 
     // Extract events using OpenAI
     const extractedEvents = await extractEventsFromEmail(incomingEmail.subject, incomingEmail.body);
-    
+
     const createdEvents = [];
     for (const extractedEvent of extractedEvents) {
       // Try to match child by name
@@ -75,7 +82,7 @@ export async function processIncomingEmail(incomingEmail: IncomingEmail) {
 
       const event = await storage.createEvent(eventData);
       createdEvents.push(event);
-      
+
       console.log(`Event created: ${event.title} for ${new Date(event.eventDate).toDateString()}`);
     }
 
@@ -113,7 +120,7 @@ async function generateEventNotifications(userId: number, event: any): Promise<v
 
   // Check if user is responsible for this event
   let isUserResponsible = true; // Default to true if no child/schedule specified
-  
+
   if (event.childId) {
     isUserResponsible = await storage.getUserResponsibilityForDate(userId, event.childId, eventDate);
   }
@@ -148,11 +155,11 @@ async function sendSMSNotification(phoneNumber: string, message: string) {
     to: phoneNumber,
     message: message
   });
-  
+
   if (!result.success) {
     console.error(`Failed to send SMS to ${phoneNumber}: ${result.error}`);
   }
-  
+
   return result;
 }
 
@@ -166,10 +173,10 @@ export class EmailPollingService {
 
   start() {
     if (this.isPolling) return;
-    
+
     this.isPolling = true;
     console.log('Email polling service started');
-    
+
     // Set up polling interval
     setInterval(() => {
       this.pollForNewEmails();
@@ -183,13 +190,13 @@ export class EmailPollingService {
 
   private async pollForNewEmails() {
     console.log('Polling for new emails...');
-    
+
     // In production, this would:
     // 1. Connect to IMAP/POP3 server
     // 2. Check for new emails in inbox
     // 3. Process each new email
     // 4. Mark emails as read/delete them
-    
+
     // For now, just log that polling occurred
     console.log('Email polling completed');
   }
@@ -204,9 +211,9 @@ export function createEmailWebhookHandler() {
     try {
       // Parse webhook payload (format varies by provider)
       const emailData = parseEmailWebhook(req.body);
-      
+
       const result = await processIncomingEmail(emailData);
-      
+
       if (result.success) {
         res.status(200).json({ 
           message: 'Email processed successfully',
