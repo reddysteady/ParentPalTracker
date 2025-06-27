@@ -140,7 +140,7 @@ Preferred communication style: Simple, everyday language.
 - Email processing with event extraction
 
 ### 🔄 In Progress
-- Server deployment and testing
+- OAuth workflow debugging and UI state management fixes
 
 ### 📋 Next Steps
 1. Test email processing with real school emails

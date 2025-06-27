@@ -1111,10 +1111,9 @@
         // Listen for OAuth completion messages
         window.addEventListener('message', function(event) {
             if (event.data === 'gmail-connected') {
-                console.log('Gmail connection successful!');
+                console.log('Gmail connection successful! Updating UI...');
                 checkGmailConnection();
-                // Optionally refresh the page or update UI
-                location.reload();
+                alert('Gmail connected successfully! You can now sync your emails.');
             } else if (event.data === 'gmail-error') {
                 console.error('Gmail connection failed');
                 alert('Gmail connection failed. Please try again.');
@@ -1125,10 +1124,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing app...');
 
-            // FORCE CLEAR ALL localStorage to ensure fresh state (temporary debug)
-            console.log('localStorage before clear:', localStorage.getItem('gmailTokens'));
-            localStorage.removeItem('gmailTokens');
-            console.log('localStorage after clear:', localStorage.getItem('gmailTokens'));
+            // Only clear invalid cached tokens (not all tokens)
+            const tokens = localStorage.getItem('gmailTokens');
+            if (tokens === 'null' || tokens === '{}' || tokens === 'undefined') {
+                localStorage.removeItem('gmailTokens');
+                console.log('Cleared invalid cached tokens');
+            }
 
             // Show dashboard by default
             showTab('dashboard');
