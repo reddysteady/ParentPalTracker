@@ -1154,11 +1154,7 @@
         </div>
 
         <script>
-            // Global state
-            let currentUser = null;
-            let gmailTokens = null;
-
-            // Define mobile navigation functions globally before any event listeners
+            // Define mobile navigation functions FIRST to ensure global availability
             function toggleMobileMenu() {
                 try {
                     const dropdown = document.getElementById('mobile-nav-dropdown');
@@ -1314,7 +1310,9 @@
             window.selectMobileTab = selectMobileTab;
             window.showTab = showTab;
 
-            
+            // Global state variables
+            let currentUser = null;
+            let gmailTokens = null;
 
             // Dashboard functions
             function loadDashboard() {
