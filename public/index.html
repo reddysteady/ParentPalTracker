@@ -1154,8 +1154,11 @@
         </div>
 
         <script>
-            // Define mobile navigation functions FIRST to ensure global availability
-            function toggleMobileMenu() {
+            // CRITICAL: Define mobile functions FIRST before ANY other JavaScript code
+            console.log('🚀 Starting JavaScript execution - defining mobile functions...');
+            
+            // IMMEDIATE GLOBAL FUNCTION DEFINITION - No dependencies, no DOM required
+            window.toggleMobileMenu = function() {
                 console.log('🍔 toggleMobileMenu called - START');
                 try {
                     const dropdown = document.getElementById('mobile-nav-dropdown');
@@ -1199,15 +1202,8 @@
                 }
             }
             
-            // handleMobileMenuClick function removed - using toggleMobileMenu directly
-
-            // Verify function is defined immediately
-            console.log('toggleMobileMenu function defined:', typeof toggleMobileMenu);
-            
-            // Also define as a backup method
-            window.toggleMobileMenu = toggleMobileMenu;
-
-            function selectMobileTab(tabName, displayName) {
+            // IMMEDIATE GLOBAL FUNCTION DEFINITION #2
+            window.selectMobileTab = function(tabName, displayName) {
                 try {
                     // Update page title
                     const pageTitle = document.getElementById('current-page-title');
@@ -1253,8 +1249,8 @@
                 }
             }
 
-            // Tab navigation function
-            function showTab(tabName) {
+            // IMMEDIATE GLOBAL FUNCTION DEFINITION #3  
+            window.showTab = function(tabName) {
                 localStorage.setItem('currentTab', tabName);
 
                 const tabs = document.querySelectorAll('.tab-content');
@@ -1297,6 +1293,18 @@
                     loadChildren();
                 }
             }
+
+            // IMMEDIATE VERIFICATION - Test that functions are globally available
+            console.log('🔍 Mobile function availability check:', {
+                toggleMobileMenu: typeof window.toggleMobileMenu,
+                selectMobileTab: typeof window.selectMobileTab,
+                showTab: typeof window.showTab
+            });
+
+            // Also make available via regular function declaration as backup
+            function toggleMobileMenu() { return window.toggleMobileMenu(); }
+            function selectMobileTab(tabName, displayName) { return window.selectMobileTab(tabName, displayName); }
+            function showTab(tabName) { return window.showTab(tabName); }
 
             function updateMobileNavState(tabName) {
                 const tabNameToDisplay = {
