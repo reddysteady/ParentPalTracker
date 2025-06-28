@@ -482,7 +482,7 @@
                     <h2 id="current-page-title">Dashboard</h2>
                     <button
                         class="mobile-menu-toggle"
-                        onclick="toggleMobileMenu()"
+                        id="mobile-menu-toggle-btn"
                         aria-expanded="false"
                         aria-label="Toggle navigation menu"
                     >
@@ -496,31 +496,36 @@
                 >
                     <button
                         class="mobile-nav-item active"
-                        onclick="selectMobileTab('dashboard', 'Dashboard')"
+                        data-tab="dashboard"
+                        data-display="Dashboard"
                     >
                         Dashboard
                     </button>
                     <button
                         class="mobile-nav-item"
-                        onclick="selectMobileTab('children', 'Children')"
+                        data-tab="children"
+                        data-display="Children"
                     >
                         Children
                     </button>
                     <button
                         class="mobile-nav-item"
-                        onclick="selectMobileTab('events', 'Events')"
+                        data-tab="events"
+                        data-display="Events"
                     >
                         Events
                     </button>
                     <button
                         class="mobile-nav-item"
-                        onclick="selectMobileTab('gmail', 'Gmail Integration')"
+                        data-tab="gmail"
+                        data-display="Gmail Integration"
                     >
                         Gmail Integration
                     </button>
                     <button
                         class="mobile-nav-item"
-                        onclick="selectMobileTab('settings', 'Settings')"
+                        data-tab="settings"
+                        data-display="Settings"
                     >
                         Settings
                     </button>
@@ -1154,32 +1159,20 @@
         </div>
 
         <script>
-            // CRITICAL: Define mobile functions FIRST before ANY other JavaScript code
-            console.log('🚀 Starting JavaScript execution - defining mobile functions...');
-            
-            // IMMEDIATE GLOBAL FUNCTION DEFINITION - No dependencies, no DOM required
-            window.toggleMobileMenu = function() {
-                console.log('🍔 toggleMobileMenu called - START');
+            // Clean and simple mobile navigation functions
+            function toggleMobileMenu() {
+                console.log('🍔 toggleMobileMenu called');
                 try {
                     const dropdown = document.getElementById('mobile-nav-dropdown');
                     const toggleButton = document.querySelector('.mobile-menu-toggle');
                     
-                    console.log('🔍 DOM Elements check:', {
-                        dropdown: !!dropdown,
-                        dropdownId: dropdown?.id,
-                        toggleButton: !!toggleButton,
-                        toggleButtonClass: toggleButton?.className
-                    });
-
                     if (!dropdown) {
                         console.error('Mobile dropdown element not found');
                         return;
                     }
 
-                    // Check current visibility state more reliably
                     const isCurrentlyVisible = dropdown.style.display === 'block';
 
-                    // Toggle visibility
                     if (isCurrentlyVisible) {
                         dropdown.style.display = 'none';
                         if (toggleButton) {
@@ -1193,41 +1186,28 @@
                             toggleButton.textContent = '✕';
                             toggleButton.setAttribute('aria-expanded', 'true');
                         }
-                        console.log('🍔 Mobile menu opened');
+                        console.log('Mobile menu opened');
                     }
-                    console.log('🍔 toggleMobileMenu completed successfully');
                 } catch (error) {
-                    console.error('🚨 Error in toggleMobileMenu:', error);
-                    console.error('🚨 Error stack:', error.stack);
+                    console.error('Error in toggleMobileMenu:', error);
                 }
             }
-            
-            // IMMEDIATE GLOBAL FUNCTION DEFINITION #2
-            window.selectMobileTab = function(tabName, displayName) {
+
+            function selectMobileTab(tabName, displayName) {
                 try {
-                    // Update page title
                     const pageTitle = document.getElementById('current-page-title');
                     if (pageTitle) {
                         pageTitle.textContent = displayName;
-                    } else {
-                        console.warn('Page title element not found');
                     }
 
-                    // Update active state for mobile nav items
                     const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
                     mobileNavItems.forEach(item => {
                         item.classList.remove('active');
+                        if (item.dataset.tab === tabName) {
+                            item.classList.add('active');
+                        }
                     });
 
-                    // Find and activate the selected item
-                    const activeItem = document.querySelector(`[onclick*="selectMobileTab('${tabName}'"]`);
-                    if (activeItem) {
-                        activeItem.classList.add('active');
-                    } else {
-                        console.warn(`Mobile nav item for ${tabName} not found`);
-                    }
-
-                    // Close the dropdown menu
                     const dropdown = document.getElementById('mobile-nav-dropdown');
                     const toggleButton = document.querySelector('.mobile-menu-toggle');
 
@@ -1240,17 +1220,14 @@
                         toggleButton.setAttribute('aria-expanded', 'false');
                     }
 
-                    // Navigate to the selected tab
                     showTab(tabName);
-
                     console.log(`Mobile navigation: switched to ${displayName} (${tabName})`);
                 } catch (error) {
                     console.error('Error in mobile tab selection:', error);
                 }
             }
 
-            // IMMEDIATE GLOBAL FUNCTION DEFINITION #3  
-            window.showTab = function(tabName) {
+            function showTab(tabName) {
                 localStorage.setItem('currentTab', tabName);
 
                 const tabs = document.querySelectorAll('.tab-content');
@@ -1294,17 +1271,10 @@
                 }
             }
 
-            // IMMEDIATE VERIFICATION - Test that functions are globally available
-            console.log('🔍 Mobile function availability check:', {
-                toggleMobileMenu: typeof window.toggleMobileMenu,
-                selectMobileTab: typeof window.selectMobileTab,
-                showTab: typeof window.showTab
-            });
-
-            // Also make available via regular function declaration as backup
-            function toggleMobileMenu() { return window.toggleMobileMenu(); }
-            function selectMobileTab(tabName, displayName) { return window.selectMobileTab(tabName, displayName); }
-            function showTab(tabName) { return window.showTab(tabName); }
+            // Make functions globally available
+            window.toggleMobileMenu = toggleMobileMenu;
+            window.selectMobileTab = selectMobileTab;
+            window.showTab = showTab;
 
             function updateMobileNavState(tabName) {
                 const tabNameToDisplay = {
@@ -1331,17 +1301,7 @@
                 }
             }
 
-            // Explicitly attach functions to global window object for inline onclick handlers
-            window.toggleMobileMenu = toggleMobileMenu;
-            window.selectMobileTab = selectMobileTab;
-            window.showTab = showTab;
             
-            // Debug verification of global functions
-            console.log('Global functions check:', {
-                toggleMobileMenu: typeof window.toggleMobileMenu,
-                selectMobileTab: typeof window.selectMobileTab,
-                showTab: typeof window.showTab
-            });
 
             // Global state variables
             let currentUser = null;
@@ -2425,42 +2385,31 @@
             document.addEventListener('DOMContentLoaded', function() {
                 console.log('DOM loaded, initializing app...');
 
-                // Verify mobile functions are accessible after DOM load
-                console.log('📱 Post-DOM mobile functions check:', {
-                    toggleMobileMenu: typeof window.toggleMobileMenu,
-                    selectMobileTab: typeof window.selectMobileTab,
-                    showTab: typeof window.showTab,
-                    handleMobileMenuClick: typeof window.handleMobileMenuClick,
-                    inlineHandler: typeof toggleMobileMenu,
-                    globalScope: typeof toggleMobileMenu !== 'undefined',
-                    windowScope: 'toggleMobileMenu' in window
-                });
-                
-                // Test if the function can be called programmatically
-                try {
-                    console.log('🧪 Testing toggleMobileMenu availability...');
-                    if (typeof window.toggleMobileMenu === 'function') {
-                        console.log('✅ window.toggleMobileMenu is callable');
-                    } else {
-                        console.error('❌ window.toggleMobileMenu is not a function');
-                    }
-                } catch (error) {
-                    console.error('🚨 Error testing toggleMobileMenu:', error);
-                }
-
-                // Initialize mobile menu state
+                // Initialize mobile menu state and event listeners
                 const dropdown = document.getElementById('mobile-nav-dropdown');
-                const toggleButton = document.querySelector('.mobile-menu-toggle');
+                const toggleButton = document.getElementById('mobile-menu-toggle-btn');
 
                 if (dropdown) {
-                    dropdown.style.display = 'none'; // Ensure it starts hidden
+                    dropdown.style.display = 'none';
                 }
 
                 if (toggleButton) {
                     toggleButton.setAttribute('aria-expanded', 'false');
-                    // Test if onclick handler can find the function
-                    console.log('Toggle button onclick:', toggleButton.getAttribute('onclick'));
+                    // Add event listener instead of inline onclick
+                    toggleButton.addEventListener('click', toggleMobileMenu);
+                    console.log('Mobile menu toggle event listener attached');
                 }
+
+                // Add event listeners to mobile nav items
+                const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+                mobileNavItems.forEach(item => {
+                    const tabName = item.dataset.tab;
+                    const displayName = item.dataset.display;
+                    if (tabName && displayName) {
+                        item.addEventListener('click', () => selectMobileTab(tabName, displayName));
+                    }
+                });
+                console.log('Mobile nav item event listeners attached to', mobileNavItems.length, 'items');
 
                 // Only clear invalid cached tokens (not all tokens)
                 const tokens = localStorage.getItem('gmailTokens');
