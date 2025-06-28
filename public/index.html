@@ -460,7 +460,10 @@
         <div class="mobile-nav">
             <div class="mobile-nav-header">
                 <h2 id="current-page-title">Dashboard</h2>
-                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                <button class="mobile-menu-toggle" 
+                        onclick="toggleMobileMenu()" 
+                        aria-expanded="false" 
+                        aria-label="Toggle navigation menu">☰</button>
             </div>
             <div class="mobile-nav-dropdown" id="mobile-nav-dropdown" style="display: none;">
                 <button class="mobile-nav-item active" onclick="selectMobileTab('dashboard', 'Dashboard')">Dashboard</button>
@@ -779,48 +782,84 @@
 
         // Define mobile menu functions immediately to prevent "not defined" errors
         function toggleMobileMenu() {
-            const dropdown = document.getElementById('mobile-nav-dropdown');
-            if (dropdown) {
-                const computedStyle = window.getComputedStyle(dropdown);
-                const isCurrentlyHidden = dropdown.style.display === 'none' || 
-                                        dropdown.style.display === '' ||
-                                        computedStyle.display === 'none';
-                
-                dropdown.style.display = isCurrentlyHidden ? 'block' : 'none';
-                
+            try {
+                const dropdown = document.getElementById('mobile-nav-dropdown');
                 const toggleButton = document.querySelector('.mobile-menu-toggle');
-                if (toggleButton) {
-                    toggleButton.textContent = isCurrentlyHidden ? '✕' : '☰';
+                
+                if (!dropdown) {
+                    console.error('Mobile dropdown element not found');
+                    return;
                 }
                 
-                console.log('Mobile menu toggled:', isCurrentlyHidden ? 'opened' : 'closed');
-            } else {
-                console.error('Mobile dropdown element not found');
+                // Check current visibility state more reliably
+                const isCurrentlyVisible = dropdown.style.display === 'block' && 
+                                         dropdown.style.display !== 'none';
+                
+                // Toggle visibility
+                if (isCurrentlyVisible) {
+                    dropdown.style.display = 'none';
+                    if (toggleButton) {
+                        toggleButton.textContent = '☰';
+                        toggleButton.setAttribute('aria-expanded', 'false');
+                    }
+                    console.log('Mobile menu closed');
+                } else {
+                    dropdown.style.display = 'block';
+                    if (toggleButton) {
+                        toggleButton.textContent = '✕';
+                        toggleButton.setAttribute('aria-expanded', 'true');
+                    }
+                    console.log('Mobile menu opened');
+                }
+            } catch (error) {
+                console.error('Error toggling mobile menu:', error);
             }
         }
 
         function selectMobileTab(tabName, displayName) {
-            const pageTitle = document.getElementById('current-page-title');
-            if (pageTitle) {
-                pageTitle.textContent = displayName;
+            try {
+                // Update page title
+                const pageTitle = document.getElementById('current-page-title');
+                if (pageTitle) {
+                    pageTitle.textContent = displayName;
+                } else {
+                    console.warn('Page title element not found');
+                }
+
+                // Update active state for mobile nav items
+                const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+                mobileNavItems.forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Find and activate the selected item
+                const activeItem = document.querySelector(`[onclick*="selectMobileTab('${tabName}'"]`);
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                } else {
+                    console.warn(`Mobile nav item for ${tabName} not found`);
+                }
+
+                // Close the dropdown menu
+                const dropdown = document.getElementById('mobile-nav-dropdown');
+                const toggleButton = document.querySelector('.mobile-menu-toggle');
+                
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                }
+                
+                if (toggleButton) {
+                    toggleButton.textContent = '☰';
+                    toggleButton.setAttribute('aria-expanded', 'false');
+                }
+
+                // Navigate to the selected tab
+                showTab(tabName);
+                
+                console.log(`Mobile navigation: switched to ${displayName} (${tabName})`);
+            } catch (error) {
+                console.error('Error in mobile tab selection:', error);
             }
-
-            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-            mobileNavItems.forEach(item => {
-                item.classList.remove('active');
-            });
-
-            const activeItem = document.querySelector(`[onclick="selectMobileTab('${tabName}', '${displayName}')"]`);
-            if (activeItem) {
-                activeItem.classList.add('active');
-            }
-
-            const dropdown = document.getElementById('mobile-nav-dropdown');
-            if (dropdown) {
-                dropdown.style.display = 'none';
-            }
-
-            showTab(tabName);
         }
 
         // Tab navigation function (needed by mobile menu)
@@ -898,6 +937,22 @@
         window.toggleMobileMenu = toggleMobileMenu;
         window.selectMobileTab = selectMobileTab;
         window.showTab = showTab;
+        
+        // Ensure mobile menu is properly initialized
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('mobile-nav-dropdown');
+            const toggleButton = document.querySelector('.mobile-menu-toggle');
+            
+            if (dropdown) {
+                dropdown.style.display = 'none'; // Ensure it starts hidden
+            }
+            
+            if (toggleButton) {
+                toggleButton.setAttribute('aria-expanded', 'false');
+            }
+            
+            console.log('Mobile navigation initialized');
+        });
 
         // Tab navigation function (moved to top)
 
