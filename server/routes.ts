@@ -566,4 +566,67 @@ router.get('/api/users/:userId/stats', async (req: Request<{ userId: string }>, 
   }
 });
 
+// Get user settings
+router.get('/api/users/:userId/settings', async (req: Request<{ userId: string }>, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const user = await storage.getUser(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Extract settings from user object
+    const settings = {
+      schoolDomains: user.schoolDomains || [],
+      emailSettings: user.emailSettings || { maxEmails: 20, emailDays: 7 },
+      notificationSettings: user.notificationSettings || { 
+        email: user.email, 
+        phone: user.phoneNumber,
+        dailyDigest: true,
+        urgentAlerts: true
+      }
+    };
+
+    res.json(settings);
+  } catch (error) {
+    console.error('Error getting user settings:', error);
+    res.status(500).json({ error: 'Failed to get user settings' });
+  }
+});
+
+// Update user settings
+router.post('/api/users/:userId/settings', async (req: Request<{ userId: string }>, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const { emailSettings, notificationSettings } = req.body;
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prepare update object
+    const updateData: any = {};
+    
+    if (emailSettings) {
+      updateData.emailSettings = emailSettings;
+    }
+    
+    if (notificationSettings) {
+      updateData.notificationSettings = notificationSettings;
+      // Also update primary email/phone if provided
+      if (notificationSettings.email) updateData.email = notificationSettings.email;
+      if (notificationSettings.phone) updateData.phoneNumber = notificationSettings.phone;
+    }
+
+    await storage.updateUser(userId, updateData);
+
+    res.json({ success: true, message: 'Settings updated successfully' });
+  } catch (error) {
+    console.error('Error updating user settings:', error);
+    res.status(500).json({ error: 'Failed to update user settings' });
+  }
+});
+
 export default router;

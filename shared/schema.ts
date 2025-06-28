@@ -13,6 +13,8 @@ export const users = pgTable('users', {
   phoneNumber: text('phone_number'),
   gmailTokens: jsonb('gmail_tokens'),
   schoolDomains: text('school_domains').array(),
+  emailSettings: jsonb('email_settings'),
+  notificationSettings: jsonb('notification_settings'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 });

@@ -1162,9 +1162,22 @@
             const domainsData = await domainsResponse.json();
             const domains = domainsData.schoolDomains || [];
 
-            // Get email settings
-            const savedSettings = localStorage.getItem('emailSettings');
-            const emailSettings = savedSettings ? JSON.parse(savedSettings) : { maxEmails: 20, emailDays: 7 };
+            // Get email settings from database or localStorage fallback
+            let emailSettings = { maxEmails: 20, emailDays: 7 };
+            try {
+                const settingsResponse = await fetch('/api/users/1/settings');
+                if (settingsResponse.ok) {
+                    const userData = await settingsResponse.json();
+                    emailSettings = userData.emailSettings || emailSettings;
+                    console.log('Using email settings from database:', emailSettings);
+                } else {
+                    throw new Error('Database not available');
+                }
+            } catch (error) {
+                console.log('Falling back to localStorage settings');
+                const savedSettings = localStorage.getItem('emailSettings');
+                emailSettings = savedSettings ? JSON.parse(savedSettings) : emailSettings;
+            }
 
             let statusMessage = '🔄 Syncing emails from Gmail API (Real Data)...';
             statusMessage += ` (Max: ${emailSettings.maxEmails} emails, ${emailSettings.emailDays} days)`;
@@ -1366,7 +1379,7 @@
         }
 
         // Settings functions
-        function saveNotificationSettings(event) {
+        async function saveNotificationSettings(event) {
             event.preventDefault();
 
             const settings = {
@@ -1376,8 +1389,28 @@
                 urgentAlerts: document.getElementById('urgentAlerts').checked
             };
 
-            localStorage.setItem('notificationSettings', JSON.stringify(settings));
-            alert('Notification settings saved!');
+            try {
+                const response = await fetch('/api/users/1/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ notificationSettings: settings })
+                });
+
+                if (response.ok) {
+                    // Also save to localStorage as backup
+                    localStorage.setItem('notificationSettings', JSON.stringify(settings));
+                    alert('Notification settings saved to database!');
+                } else {
+                    throw new Error('Failed to save to database');
+                }
+            } catch (error) {
+                console.error('Error saving notification settings:', error);
+                // Fallback to localStorage
+                localStorage.setItem('notificationSettings', JSON.stringify(settings));
+                alert('Settings saved locally (database connection failed)');
+            }
         }
 
         function saveGPTSettings(event) {
@@ -1410,7 +1443,31 @@
                 if (customInstructions) customInstructions.value = settings.customInstructions || '';
             }
 
-            // Load notification settings
+            // Load notification settings from database
+            try {
+                const response = await fetch('/api/users/1/settings');
+                if (response.ok) {
+                    const userData = await response.json();
+                    const settings = userData.notificationSettings || {};
+                    
+                    const emailInput = document.getElementById('notificationEmail');
+                    const phoneInput = document.getElementById('notificationPhone');
+                    const dailyDigest = document.getElementById('dailyDigest');
+                    const urgentAlerts = document.getElementById('urgentAlerts');
+
+                    if (emailInput) emailInput.value = settings.email || '';
+                    if (phoneInput) phoneInput.value = settings.phone || '';
+                    if (dailyDigest) dailyDigest.checked = settings.dailyDigest !== false;
+                    if (urgentAlerts) urgentAlerts.checked = settings.urgentAlerts !== false;
+                    
+                    console.log('Notification settings loaded from database');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error loading notification settings from database:', error);
+            }
+
+            // Fallback to localStorage
             const notificationSettings = localStorage.getItem('notificationSettings');
             if (notificationSettings) {
                 const settings = JSON.parse(notificationSettings);
@@ -1423,6 +1480,8 @@
                 if (phoneInput) phoneInput.value = settings.phone || '';
                 if (dailyDigest) dailyDigest.checked = settings.dailyDigest !== false;
                 if (urgentAlerts) urgentAlerts.checked = settings.urgentAlerts !== false;
+                
+                console.log('Notification settings loaded from localStorage');
             }
         }
 
@@ -1617,7 +1676,7 @@
             }
         }
 
-        function saveEmailSettings() {
+        async function saveEmailSettings() {
             const maxEmails = document.getElementById('max-emails').value;
             const emailDays = document.getElementById('email-days').value;
 
@@ -1626,8 +1685,28 @@
                 emailDays: parseInt(emailDays, 10) || 7
             };
 
-            localStorage.setItem('emailSettings', JSON.stringify(settings));
-            alert('Email settings saved!');
+            try {
+                const response = await fetch('/api/users/1/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ emailSettings: settings })
+                });
+
+                if (response.ok) {
+                    // Also save to localStorage as backup
+                    localStorage.setItem('emailSettings', JSON.stringify(settings));
+                    alert('Email settings saved to database!');
+                } else {
+                    throw new Error('Failed to save to database');
+                }
+            } catch (error) {
+                console.error('Error saving email settings:', error);
+                // Fallback to localStorage
+                localStorage.setItem('emailSettings', JSON.stringify(settings));
+                alert('Settings saved locally (database connection failed)');
+            }
         }
 
         // Gmail section management
@@ -1690,7 +1769,28 @@
         }
 
         // Load saved email settings into form
-        function loadEmailSettings() {
+        async function loadEmailSettings() {
+            try {
+                // Try to load from database first
+                const response = await fetch('/api/users/1/settings');
+                if (response.ok) {
+                    const userData = await response.json();
+                    const settings = userData.emailSettings || { maxEmails: 20, emailDays: 7 };
+                    
+                    const maxEmailsInput = document.getElementById('max-emails');
+                    const emailDaysInput = document.getElementById('email-days');
+                    
+                    if (maxEmailsInput) maxEmailsInput.value = settings.maxEmails || 20;
+                    if (emailDaysInput) emailDaysInput.value = settings.emailDays || 7;
+                    
+                    console.log('Email settings loaded from database:', settings);
+                    return;
+                }
+            } catch (error) {
+                console.error('Error loading email settings from database:', error);
+            }
+
+            // Fallback to localStorage
             const savedSettings = localStorage.getItem('emailSettings');
             if (savedSettings) {
                 const settings = JSON.parse(savedSettings);
@@ -1699,6 +1799,8 @@
                 
                 if (maxEmailsInput) maxEmailsInput.value = settings.maxEmails || 20;
                 if (emailDaysInput) emailDaysInput.value = settings.emailDays || 7;
+                
+                console.log('Email settings loaded from localStorage:', settings);
             }
         }
 
