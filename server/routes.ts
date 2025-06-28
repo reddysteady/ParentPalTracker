@@ -244,6 +244,9 @@ router.get('/api/auth/google/callback', async (req: Request, res: Response) => {
           const tokens = ${tokensJson};
           console.log('Tokens received:', !!tokens);
 
+          // Store tokens in localStorage
+          localStorage.setItem('gmailTokens', JSON.stringify(tokens));
+
           // Notify parent window about successful connection and pass tokens
           if (window.opener) {
             window.opener.postMessage({ 

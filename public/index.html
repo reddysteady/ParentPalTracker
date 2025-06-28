@@ -403,18 +403,18 @@
             <!-- Sync Settings - Initially Hidden -->
             <div class="card" id="sync-settings" style="display: none;">
                 <h3>⚙️ Email Processing Settings</h3>
-                
+
                 <!-- School Domains Section -->
                 <div style="margin-top: 20px;">
                     <h4>School Email Domains</h4>
                     <p style="color: #666; font-size: 14px; margin: 5px 0;">Add your school's email domains to filter and process only relevant emails. This helps reduce processing costs and improves accuracy.</p>
-                    
+
                     <div style="display: flex; gap: 10px; margin: 15px 0;">
                         <input type="text" id="domain-input" placeholder="e.g., hillviewschool.edu" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         <button onclick="addDomain()" class="btn-primary">Add Domain</button>
                     </div>
                     <p style="color: #888; font-size: 12px;">Enter just the domain name (e.g., "school.edu" not "admin@school.edu")</p>
-                    
+
                     <div style="margin-top: 15px;">
                         <h5>Configured Domains:</h5>
                         <div id="domains-container">
@@ -422,7 +422,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Processing Statistics Section -->
                 <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
                     <h4>Email Processing Statistics</h4>
@@ -441,7 +441,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="margin-top: 20px;">
                     <button onclick="toggleSyncSettings()" class="btn-secondary">Hide Settings</button>
                 </div>
@@ -522,7 +522,7 @@
         function showTab(tabName) {
             // Store current tab in localStorage
             localStorage.setItem('currentTab', tabName);
-            
+
             // Hide all tab contents
             const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => {
@@ -820,72 +820,57 @@
         }
 
         // Load email list
-        async function loadEmailList() {
-            const emailList = document.getElementById('emailList');
-            if (!emailList) return;
-
+        async function loadEmailList(userId = 1) {
             try {
-                emailList.innerHTML = '<div class="loading">Loading emails...</div>';
-                
-                const response = await fetch('/api/emails');
+                const response = await fetch(`/api/emails/${userId}`);
                 if (!response.ok) {
-                    throw new Error('Failed to fetch emails');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 const emails = await response.json();
-                console.log('Loaded emails:', emails.length);
-                console.log('Sample email structure:', emails[0]);
+                console.log('Loaded emails:', emails.length, 'emails for user', userId);
+
+                const container = document.getElementById('emailList');
+                if (!container) return;
 
                 if (emails.length === 0) {
-                    emailList.innerHTML = '<div class="loading">No emails synced yet. Click "Sync Emails" to get started.</div>';
+                    container.innerHTML = '<div class="empty-state">No emails found. Click "Sync Emails" to fetch your Gmail messages.</div>';
                     return;
                 }
 
-                // Create table for emails
-                emailList.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
-                                <th style="padding: 12px; text-align: left;">Sender</th>
-                                <th style="padding: 12px; text-align: left;">Subject</th>
-                                <th style="padding: 12px; text-align: left;">Date</th>
-                                <th style="padding: 12px; text-align: left;">Status</th>
-                                <th style="padding: 12px; text-align: left;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${emails.map(email => `
-                                <tr style="border-bottom: 1px solid #eee;">
-                                    <td style="padding: 12px;">${email.sender || 'Unknown'}</td>
-                                    <td style="padding: 12px;">${email.subject}</td>
-                                    <td style="padding: 12px;">${new Date(email.receivedAt).toLocaleDateString()}</td>
-                                    <td style="padding: 12px;">
-                                        <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
-                                            Synced
-                                        </span>
-                                    </td>
-                                    <td style="padding: 12px;">
-                                        <button onclick="viewEmail(${email.id})" style="background: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 5px;">View</button>
-                                        <button onclick="deleteEmail(${email.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-
+                container.innerHTML = emails.map(email => `
+                    <div class="email-item">
+                        <div class="email-header">
+                            <span class="email-sender">${email.sender}</span>
+                            <span class="email-date">${new Date(email.receivedAt || email.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div class="email-subject">${email.subject}</div>
+                        <div class="email-actions">
+                            <span class="email-status">${email.processed ? 'Synced' : 'Processing'}</span>
+                            <button class="calendar-btn ${email.hasEvent ? 'has-event' : 'no-event'}" 
+                                    onclick="showEventSummary(${email.id})" 
+                                    title="${email.hasEvent ? 'View extracted event' : 'No event found'}">
+                                📅
+                            </button>
+                            <button class="delete-btn" onclick="deleteEmail(${email.id})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
             } catch (error) {
                 console.error('Error loading email list:', error);
-                emailList.innerHTML = `<div style="color: #dc3545; text-align: center; padding: 20px;">Error loading emails: ${error.message}<br>Please check console for details.</div>`;
+                const container = document.getElementById('emailList');
+                if (container) {
+                    container.innerHTML = '<div class="error-message">Failed to load emails: ' + error.message + '</div>';
+                }
             }
         }
 
         function toggleSyncSettings() {
             const settingsDiv = document.getElementById('sync-settings');
             const isHidden = settingsDiv.style.display === 'none';
-            
+
             settingsDiv.style.display = isHidden ? 'block' : 'none';
-            
+
             // Update button text
             const buttons = document.querySelectorAll('[onclick="toggleSyncSettings()"]');
             buttons.forEach(button => {
@@ -928,27 +913,80 @@
         }
 
         async function syncGmail() {
-            const gmailTokens = JSON.parse(localStorage.getItem('gmailTokens') || '{}');
-            if (!gmailTokens.access_token) {
+            const tokens = localStorage.getItem('gmailTokens');
+            if (!tokens) {
                 alert('Please connect Gmail first');
                 return;
-            }
+                        }
+
+            updateStatus('Syncing emails...');
+            console.log('Syncing emails...');
 
             try {
-                updateStatus('Syncing emails...');
-                const response = await fetch('/api/gmail/sync/1', {
+                // First get user info from Gmail using the tokens
+                const parsedTokens = JSON.parse(tokens);
+                const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                    headers: {
+                        'Authorization': `Bearer ${parsedTokens.access_token}`
+                    }
+                });
+
+                let userEmail = 'edward.stead@gmail.com'; // Fallback
+                let userName = 'Edward Stead'; // Fallback
+
+                if (userInfoResponse.ok) {
+                    const userInfo = await userInfoResponse.json();
+                    userEmail = userInfo.email;
+                    userName = userInfo.name || userInfo.email;
+                    console.log('Got user info from Gmail:', { email: userEmail, name: userName });
+                } else {
+                    console.log('Could not get user info from Gmail, using fallback');
+                }
+
+                // Create/find user 
+                console.log('Creating/finding user...');
+                const userResponse = await fetch('/api/users', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tokens: gmailTokens })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        name: userName,
+                        customEmailAddress: userEmail,
+                        phoneNumber: '+1234567890'
+                    })
+                });
+
+                if (!userResponse.ok) {
+                    const errorText = await userResponse.text();
+                    updateStatus(`✗ Error creating user: ${errorText}`);
+                    return;
+                }
+
+                const userResult = await userResponse.json();
+                console.log('User created/found:', userResult);
+
+                if (!userResult.id) {
+                    updateStatus('✗ Error: Could not create or find user');
+                    return;
+                }
+
+                console.log('Syncing emails...');
+                const response = await fetch(`/api/gmail/sync/${userResult.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tokens: parsedTokens
+                    })
                 });
 
                 if (!response.ok) {
                     const errorResult = await response.json();
                     if (errorResult.expired) {
-                        localStorage.removeItem('gmailTokens');
-                        checkGmailConnection(); // Update UI to show disconnected state
-                        updateStatus('✗ Gmail connection expired');
-                        alert('Your Gmail connection has expired. Please reconnect Gmail to continue syncing emails.');
+                        updateStatus('✗ Gmail connection has expired. Please reconnect Gmail to continue syncing emails.');
                         return;
                     } else {
                         updateStatus(`✗ Error: ${errorResult.error || 'Sync failed'}`);
@@ -960,8 +998,8 @@
                 const result = await response.json();
                 if (result.success) {
                     updateStatus(`✓ ${result.message}`);
-                    await loadEmailList();
-                    
+                    await loadEmailList(userResult.id);
+
                     // Update statistics
                     document.getElementById('emails-processed').textContent = result.processed || 0;
                     document.getElementById('last-sync').textContent = new Date().toLocaleString();
@@ -1005,13 +1043,13 @@
             if (rawTokens === 'null' || rawTokens === '{}' || rawTokens === 'undefined' || rawTokens === null) {
                 localStorage.removeItem('gmailTokens');
             }
-            
+
             // Get fresh token value after cleanup
             const tokens = localStorage.getItem('gmailTokens');
             const statusElement = document.getElementById('gmailStatus');
             const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
             const syncButtons = document.querySelectorAll('button[onclick="syncGmail()"]');
-            
+
             console.log('Gmail connection check:', { 
                 rawTokens: rawTokens,
                 cleanedTokens: tokens,
@@ -1038,7 +1076,7 @@
                     console.error('Error parsing tokens:', e);
                     validTokens = false;
                 }
-                
+
                 if (validTokens) {
                     statusElement.innerHTML = `
                         <div class="alert alert-success">
@@ -1200,30 +1238,36 @@
             }
         }
 
-        // Listen for OAuth completion messages
         window.addEventListener('message', function(event) {
-            // Handle both old string format and new object format for backward compatibility
-            if (event.data === 'gmail-connected' || (event.data && event.data.type === 'gmail-connected')) {
+            if (event.data && event.data.type === 'gmail-connected') {
                 console.log('Gmail connection successful! Updating UI...');
-                
-                // Store tokens if provided in the new format
-                if (event.data && event.data.tokens) {
+
+                // Store the tokens received from OAuth callback
+                if (event.data.tokens) {
                     localStorage.setItem('gmailTokens', JSON.stringify(event.data.tokens));
-                    console.log('Tokens stored from OAuth callback:', { 
+                    console.log('Tokens stored from OAuth callback:', {
                         hasTokens: true,
                         hasAccessToken: !!event.data.tokens.access_token,
                         hasRefreshToken: !!event.data.tokens.refresh_token
                     });
                 }
-                
-                // Update UI immediately
+
+                // Add a small delay to ensure tokens are fully stored
                 setTimeout(() => {
                     const storedTokens = localStorage.getItem('gmailTokens');
                     console.log('Tokens after OAuth completion:', { 
                         hasTokens: !!storedTokens,
+                        tokenLength: storedTokens?.length,
                         firstChars: storedTokens?.substring(0, 50) + '...'
                     });
-                    
+
+                    checkGmailConnection();
+                    alert('Gmail connected successfully! You can now sync your emails.');
+                }, 100);
+            } else if (event.data === 'gmail-connected') {
+                // Handle old format for backwards compatibility
+                console.log('Gmail connection successful! Updating UI...');
+                setTimeout(() => {
                     checkGmailConnection();
                     alert('Gmail connected successfully! You can now sync your emails.');
                 }, 100);
@@ -1232,6 +1276,85 @@
                 alert('Gmail connection failed. Please try again.');
             }
         });
+
+        // Tab navigation function
+        function showTab(tabName) {
+            // Store current tab in localStorage
+            localStorage.setItem('currentTab', tabName);
+
+            // Hide all tab contents
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => {
+                if (tab && tab.classList) {
+                    tab.classList.remove('active');
+                }
+            });
+
+            // Remove active class from all tabs
+            const tabButtons = document.querySelectorAll('.nav-tab');
+            tabButtons.forEach(button => {
+                if (button && button.classList) {
+                    button.classList.remove('active');
+                }
+            });
+
+            // Show selected tab
+            const selectedTab = document.getElementById(tabName);
+            if (selectedTab && selectedTab.classList) {
+                selectedTab.classList.add('active');
+            }
+
+            // Add active class to clicked button
+            const activeButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (activeButton && activeButton.classList) {
+                activeButton.classList.add('active');
+            }
+
+            // Load tab-specific data
+            if (tabName === 'gmail') {
+                checkGmailConnection();
+                loadEmailList();
+                loadDomains();
+                loadProcessingStats();
+            } else if (tabName === 'events') {
+                loadEvents();
+                loadChildrenOptions();
+            } else if (tabName === 'dashboard') {
+                loadDashboard();
+            } else if (tabName === 'children') {
+                loadChildren();
+            }
+        }
+
+        // Event summary and deletion functions
+        function showEventSummary(emailId) {
+            // TODO: Implement event summary popup
+            alert(`Event summary for email ${emailId} - To be implemented`);
+        }
+
+        async function deleteEmail(emailId) {
+            if (!confirm('Remove this email from view? This will not delete it from Gmail.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/emails/${emailId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Reload email list
+                    await loadEmailList();
+                    updateStatus('Email removed from view');
+                } else {
+                    const error = await response.json();
+                    alert('Failed to delete email: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error deleting email:', error);
+                alert('Failed to delete email');
+            }
+        }
 
         // Domain management functions
         async function loadDomains() {
@@ -1243,7 +1366,7 @@
                 if (response.ok) {
                     const user = await response.json();
                     const domains = user.schoolDomains || [];
-                    
+
                     if (domains.length === 0) {
                         container.innerHTML = '<p style="color: #666; font-style: italic;">No domains configured yet. Add domains above to filter school emails.</p>';
                     } else {
@@ -1266,12 +1389,12 @@
         async function addDomain() {
             const input = document.getElementById('domain-input');
             const domain = input.value.trim();
-            
+
             if (!domain) {
                 alert('Please enter a domain name');
                 return;
             }
-            
+
             // Basic domain validation
             if (!domain.includes('.') || domain.includes('@') || domain.includes('http')) {
                 alert('Please enter a valid domain name (e.g., "school.edu")');
@@ -1286,7 +1409,7 @@
                     },
                     body: JSON.stringify({ domain })
                 });
-                
+
                 if (response.ok) {
                     input.value = '';
                     loadDomains();
@@ -1312,7 +1435,7 @@
                     },
                     body: JSON.stringify({ domain })
                 });
-                
+
                 if (response.ok) {
                     loadDomains();
                     alert('Domain removed successfully!');
@@ -1332,11 +1455,11 @@
                 const response = await fetch('/api/users/1/stats');
                 if (response.ok) {
                     const stats = await response.json();
-                    
+
                     const emailsProcessed = document.getElementById('emails-processed');
                     const eventsExtracted = document.getElementById('events-extracted');
                     const lastSync = document.getElementById('last-sync');
-                    
+
                     if (emailsProcessed) emailsProcessed.textContent = stats.emailsProcessed || 0;
                     if (eventsExtracted) eventsExtracted.textContent = stats.eventsExtracted || 0;
                     if (lastSync) lastSync.textContent = stats.lastSync || 'Never';
@@ -1364,7 +1487,7 @@
 
             // Check Gmail connection status
             checkGmailConnection();
-            
+
             // Load domain settings and stats if Gmail tab is active
             if (currentTab === 'gmail') {
                 loadDomains();
