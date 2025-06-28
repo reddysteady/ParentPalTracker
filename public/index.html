@@ -1158,7 +1158,7 @@
             let currentUser = null;
             let gmailTokens = null;
 
-            // Define mobile menu functions immediately to prevent "not defined" errors
+            // Define mobile navigation functions globally before any event listeners
             function toggleMobileMenu() {
                 try {
                     const dropdown = document.getElementById('mobile-nav-dropdown');
@@ -1239,7 +1239,7 @@
                 }
             }
 
-            // Tab navigation function (needed by mobile menu)
+            // Tab navigation function
             function showTab(tabName) {
                 localStorage.setItem('currentTab', tabName);
 
@@ -1284,7 +1284,6 @@
                 }
             }
 
-            // Placeholder for updateMobileNavState function
             function updateMobileNavState(tabName) {
                 const tabNameToDisplay = {
                     'dashboard': 'Dashboard',
@@ -1310,32 +1309,12 @@
                 }
             }
 
-            // Make functions globally available immediately
+            // Explicitly attach functions to global window object for inline onclick handlers
             window.toggleMobileMenu = toggleMobileMenu;
             window.selectMobileTab = selectMobileTab;
             window.showTab = showTab;
 
-            // Ensure mobile menu is properly initialized
-            document.addEventListener('DOMContentLoaded', function() {
-                const dropdown = document.getElementById('mobile-nav-dropdown');
-                const toggleButton = document.querySelector('.mobile-menu-toggle');
-
-                if (dropdown) {
-                    dropdown.style.display = 'none'; // Ensure it starts hidden
-                }
-
-                if (toggleButton) {
-                    toggleButton.setAttribute('aria-expanded', 'false');
-                }
-
-                console.log('Mobile navigation initialized');
-            });
-
-            // Tab navigation function (moved to top)
-
-            // Mobile navigation functions (moved to top to prevent "not defined" errors)
-
-            // Update mobile nav when desktop tabs are clicked (moved to top)
+            
 
             // Dashboard functions
             function loadDashboard() {
@@ -2415,6 +2394,18 @@
             document.addEventListener('DOMContentLoaded', function() {
                 console.log('DOM loaded, initializing app...');
 
+                // Initialize mobile menu state
+                const dropdown = document.getElementById('mobile-nav-dropdown');
+                const toggleButton = document.querySelector('.mobile-menu-toggle');
+
+                if (dropdown) {
+                    dropdown.style.display = 'none'; // Ensure it starts hidden
+                }
+
+                if (toggleButton) {
+                    toggleButton.setAttribute('aria-expanded', 'false');
+                }
+
                 // Only clear invalid cached tokens (not all tokens)
                 const tokens = localStorage.getItem('gmailTokens');
                 if (tokens === 'null' || tokens === '{}' || tokens === 'undefined') {
@@ -2432,6 +2423,8 @@
 
                 // Check Gmail connection status
                 checkGmailConnection();
+
+                console.log('Mobile navigation initialized');
             });
 
             function updateStatus(message) {
