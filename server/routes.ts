@@ -401,7 +401,9 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
       errors: result.errors,
       totalAttempted: result.processed + result.errors,
       successRate: result.processed + result.errors > 0 ? Math.round((result.processed / (result.processed + result.errors)) * 100) : 0,
-      isRealGmailData: true
+      isRealGmailData: true,
+      dataSource: 'Gmail API',
+      timestamp: new Date().toISOString()
     });
 
     // Check current email count in database

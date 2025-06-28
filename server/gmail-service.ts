@@ -374,33 +374,159 @@ export class GmailIntegration {
    * Process all unread school emails
    */
   async processUnreadEmails(userId: number): Promise<{ processed: number; errors: number }> {
-    try {
-      const emails = await this.searchSchoolEmails();
-      let processed = 0;
-      let errors = 0;
+  console.log(`🔄 [Gmail Service] Starting to process REAL Gmail emails for user ${userId}...`);
 
-      for (const email of emails) {
-        try {
-          const result = await this.processGmailEmail(userId, email);
-          if (result.success) {
-            processed++;
-            console.log(`Processed Gmail email: ${email.subject}`);
-          } else {
-            errors++;
-            console.error(`Failed to process Gmail email: ${email.subject}`, result.error);
-          }
-        } catch (error) {
-          errors++;
-          console.error('Error processing Gmail email:', error);
-        }
-      }
-
-      return { processed, errors };
-    } catch (error) {
-      console.error('Error processing unread emails:', error);
+  try {
+    // Get user's Gmail tokens
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(userId);
+    if (!user?.gmailTokens) {
+      console.log(`❌ [Gmail Service] No Gmail tokens found for user ${userId}`);
       return { processed: 0, errors: 1 };
     }
+
+    console.log(`✅ [Gmail Service] Found Gmail tokens for user ${userId}`, {
+      hasAccessToken: !!(user.gmailTokens as any).access_token,
+      hasRefreshToken: !!(user.gmailTokens as any).refresh_token,
+      tokenScope: (user.gmailTokens as any).scope
+    });
+
+    // Set up OAuth2 client with user's tokens
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
+    oauth2Client.setCredentials(user.gmailTokens as any);
+
+    // Create Gmail API client
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    console.log(`📡 [Gmail Service] Gmail API client initialized, fetching message list...`);
+
+    // Fetch recent emails from Gmail
+    const response = await gmail.users.messages.list({
+      userId: 'me',
+      maxResults: 20,
+      q: 'is:unread OR newer_than:7d' // Get unread emails or emails from last 7 days
+    });
+
+    const messages = response.data.messages || [];
+    console.log(`📬 [Gmail Service] Found ${messages.length} messages from Gmail API (REAL DATA)`);
+
+    if (messages.length === 0) {
+      console.log(`📭 [Gmail Service] No messages found in Gmail for user ${userId}`);
+      return { processed: 0, errors: 0 };
+    }
+
+    let processed = 0;
+    let errors = 0;
+
+    // Process each message
+    for (const message of messages) {
+      try {
+        console.log(`🔍 [Gmail Service] Fetching details for message ID: ${message.id}`);
+
+        // Get full message details
+        const messageDetails = await gmail.users.messages.get({
+          userId: 'me',
+          id: message.id!,
+          format: 'full'
+        });
+
+        const messageData = messageDetails.data;
+        const headers = messageData.payload?.headers || [];
+
+        // Extract email details from headers
+        const subject = headers.find(h => h.name?.toLowerCase() === 'subject')?.value || 'No Subject';
+        const from = headers.find(h => h.name?.toLowerCase() === 'from')?.value || 'Unknown Sender';
+        const dateHeader = headers.find(h => h.name?.toLowerCase() === 'date')?.value;
+        const receivedAt = dateHeader ? new Date(dateHeader) : new Date();
+
+        // Extract email body
+        let body = '';
+        if (messageData.payload?.body?.data) {
+          body = Buffer.from(messageData.payload.body.data, 'base64').toString('utf-8');
+        } else if (messageData.payload?.parts) {
+          // Handle multipart messages
+          for (const part of messageData.payload.parts) {
+            if (part.mimeType === 'text/plain' && part.body?.data) {
+              body = Buffer.from(part.body.data, 'base64').toString('utf-8');
+              break;
+            }
+          }
+        }
+
+        console.log(`📧 [Gmail Service] Processing REAL email:`, {
+          messageId: message.id,
+          subject: subject.substring(0, 50) + '...',
+          from: from.substring(0, 30) + '...',
+          bodyLength: body.length,
+          receivedAt: receivedAt.toISOString(),
+          isRealGmailData: true
+        });
+
+        // Check if email already exists to avoid duplicates
+        const existingEmails = await (await import('./storage')).storage.getEmailsByUserId(userId);
+        const emailExists = existingEmails.some(email => 
+          email.gmailMessageId === message.id || 
+          (email.subject === subject && email.sender === from)
+        );
+
+        if (emailExists) {
+          console.log(`⏭️ [Gmail Service] Email already exists, skipping: ${subject.substring(0, 30)}...`);
+          continue;
+        }
+
+        // Store the REAL email in database
+        const { storage } = await import('./storage');
+        await storage.createEmail({
+          userId,
+          subject,
+          body: body.substring(0, 10000), // Limit body length
+          sender: from,
+          receivedAt,
+          gmailMessageId: message.id!
+        });
+
+        processed++;
+        console.log(`✅ [Gmail Service] Successfully stored REAL Gmail email ${processed}: ${subject.substring(0, 40)}...`);
+
+      } catch (error: any) {
+        console.error(`❌ [Gmail Service] Error processing message ${message.id}:`, {
+          errorMessage: error.message,
+          errorCode: error.code,
+          isRateLimitError: error.code === 429,
+          isAuthError: error.code === 401 || error.code === 403
+        });
+        errors++;
+      }
+    }
+
+    console.log(`🎯 [Gmail Service] Real Gmail processing complete for user ${userId}:`, {
+      processed,
+      errors,
+      totalAttempted: messages.length,
+      successRate: messages.length > 0 ? Math.round((processed / messages.length) * 100) : 0,
+      dataSource: 'Gmail API (Real Data)',
+      isRealData: true
+    });
+
+    return { processed, errors };
+
+  } catch (error: any) {
+    console.error(`💥 [Gmail Service] Critical error processing REAL Gmail emails for user ${userId}:`, {
+      errorMessage: error.message,
+      errorStack: error.stack,
+      errorCode: error.code,
+      isRateLimitError: error.code === 429,
+      isAuthError: error.code === 401 || error.code === 403,
+      isQuotaError: error.message?.includes('quota')
+    });
+    return { processed: 0, errors: 1 };
   }
+}
 
   /**
    * Set up automatic email monitoring

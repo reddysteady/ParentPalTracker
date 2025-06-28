@@ -823,12 +823,12 @@
         async function loadEmailList() {
             try {
                 const response = await fetch('/api/emails/1');
-                const emails = await response.json();
+                const emailsData = await response.json();
 
-                console.log('Loaded emails:', emails.length, 'emails for user', 1);
+                console.log('Loaded emails:', emailsData.length, 'emails for user', 1);
 
                 const emailList = document.getElementById('emailList');
-                if (emails.length === 0) {
+                if (emailsData.length === 0) {
                     emailList.innerHTML = '<div class="loading">No emails found. Click "Sync Emails" to get started.</div>';
                     return;
                 }
@@ -844,7 +844,7 @@
                 html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Actions</th>';
                 html += '</tr></thead><tbody>';
 
-                emails.forEach(email => {
+                emailsData.forEach(email => {
                     const date = new Date(email.receivedAt).toLocaleDateString();
                     const eventIcon = email.hasEvent ? '📅' : '📄';
                     const eventTooltip = email.hasEvent ? 'Event extracted' : 'No event found';
@@ -873,16 +873,62 @@
 
                 html += '</tbody></table>';
 
-                // Add summary stats
-                const realEmails = emails.filter(email => email.gmailMessageId && email.gmailMessageId.length > 10);
-                const mockEmails = emails.length - realEmails.length;
+                // Enhanced data source verification and debugging
+                console.log('🔍 Analyzing email data sources:', {
+                    totalEmails: emailsData.length,
+                    sampleEmails: emailsData.slice(0, 3).map(email => ({
+                        id: email.id,
+                        subject: email.subject?.substring(0, 30) + '...',
+                        sender: email.sender,
+                        gmailMessageId: email.gmailMessageId,
+                        isTestData: email.gmailMessageId?.startsWith('test_') || email.sender?.includes('example.com'),
+                        createdAt: email.createdAt
+                    }))
+                });
+
+                const realEmails = emailsData.filter(email => {
+                    const isReal = email.gmailMessageId && 
+                                   !email.gmailMessageId.startsWith('test_') &&
+                                   email.sender && 
+                                   !email.sender.includes('example.com') &&
+                                   !email.subject.includes('Test Email') &&
+                                   !email.sender.includes('test@') &&
+                                   !email.sender.includes('mock@');
+
+                    if (!isReal) {
+                        console.log('🧪 Detected mock/test email:', {
+                            subject: email.subject?.substring(0, 30),
+                            sender: email.sender,
+                            gmailMessageId: email.gmailMessageId,
+                            reasons: [
+                                email.gmailMessageId?.startsWith('test_') ? 'test message ID' : null,
+                                email.sender?.includes('example.com') ? 'example.com sender' : null,
+                                email.subject?.includes('Test Email') ? 'test subject' : null,
+                                email.sender?.includes('test@') ? 'test sender' : null,
+                                email.sender?.includes('mock@') ? 'mock sender' : null
+                            ].filter(Boolean)
+                        });
+                    }
+
+                    return isReal;
+                });
+
+                const mockEmails = emailsData.length - realEmails.length;
+
+                console.log('📊 Data source analysis complete:', {
+                    realGmailEmails: realEmails.length,
+                    mockTestEmails: mockEmails,
+                    totalEmails: emailsData.length,
+                    percentageReal: emailsData.length > 0 ? Math.round((realEmails.length / emailsData.length) * 100) : 0
+                });
 
                 const statsHtml = `
-                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 14px;">
-                        <strong>Data Summary:</strong> 
-                        📡 ${realEmails.length} real Gmail emails, 
-                        🧪 ${mockEmails} mock/test emails
-                        ${mockEmails > 0 ? ' <span style="color: #ffc107;">⚠️ Mock data detected</span>' : ' ✅ All real data'}
+                    <div style="margin-top: 15px; padding: 10px; background: ${mockEmails > 0 ? '#fff3cd' : '#d4edda'}; border-radius: 5px; font-size: 14px; border-left: 4px solid ${mockEmails > 0 ? '#ffc107' : '#28a745'};">
+                        <strong>Data Source Analysis:</strong><br>
+                        📡 Real Gmail emails: <strong>${realEmails.length}</strong><br>
+                        🧪 Mock/test emails: <strong>${mockEmails}</strong><br>
+                        📈 Real data percentage: <strong>${emailsData.length > 0 ? Math.round((realEmails.length / emailsData.length) * 100) : 0}%</strong>
+                        ${mockEmails > 0 ? '<br><span style="color: #856404;">⚠️ <strong>Mock data detected - not from real Gmail account</strong></span>' : '<br><span style="color: #155724;">✅ <strong>All data is from real Gmail API</strong></span>'}
                     </div>
                 `;
 
