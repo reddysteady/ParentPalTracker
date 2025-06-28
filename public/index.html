@@ -839,7 +839,18 @@
         function toggleMobileMenu() {
             const dropdown = document.getElementById('mobile-nav-dropdown');
             if (dropdown) {
-                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                const isHidden = dropdown.style.display === 'none' || dropdown.style.display === '';
+                dropdown.style.display = isHidden ? 'block' : 'none';
+                
+                // Update button text/icon to indicate state
+                const toggleButton = document.querySelector('.mobile-menu-toggle');
+                if (toggleButton) {
+                    toggleButton.textContent = isHidden ? '✕' : '☰';
+                }
+                
+                console.log('Mobile menu toggled:', isHidden ? 'opened' : 'closed');
+            } else {
+                console.error('Mobile dropdown element not found');
             }
         }
 
