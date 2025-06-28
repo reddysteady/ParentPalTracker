@@ -404,6 +404,24 @@
             <div class="card" id="sync-settings" style="display: none;">
                 <h3>⚙️ Email Processing Settings</h3>
 
+                <!-- Email Limits Section -->
+                <div style="margin-top: 20px;">
+                    <h4>Email Processing Limits</h4>
+                    <p style="color: #666; font-size: 14px; margin: 5px 0;">Configure the maximum number of emails to process and the age of emails to consider.  This helps reduce processing costs and improves accuracy.</p>
+
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin: 15px 0;">
+                        <div>
+                            <label for="max-emails">Max Emails to Process:</label>
+                            <input type="number" id="max-emails" placeholder="e.g., 20" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label for="email-days">Email Age (Days):</label>
+                            <input type="number" id="email-days" placeholder="e.g., 7" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <button onclick="saveEmailSettings()" class="btn-primary">Save Email Settings</button>
+                </div>
+
                 <!-- School Domains Section -->
                 <div style="margin-top: 20px;">
                     <h4>School Email Domains</h4>
@@ -994,7 +1012,25 @@
                 return;
             }
 
-            updateStatus('🔄 Syncing emails from Gmail API (Real Data)...');
+            // Check if domains are configured
+            const domainsResponse = await fetch('/api/users/1/domains');
+            const domainsData = await domainsResponse.json();
+            const domains = domainsData.schoolDomains || [];
+
+            // Get email settings
+            const savedSettings = localStorage.getItem('emailSettings');
+            const emailSettings = savedSettings ? JSON.parse(savedSettings) : { maxEmails: 20, emailDays: 7 };
+
+            let statusMessage = '🔄 Syncing emails from Gmail API (Real Data)...';
+            statusMessage += ` (Max: ${emailSettings.maxEmails} emails, ${emailSettings.emailDays} days)`;
+
+            if (domains.length > 0) {
+                statusMessage += ` Filtering by domains: ${domains.join(', ')}`;
+            } else {
+                statusMessage += ' Using default school domain patterns';
+            }
+
+            updateStatus(statusMessage);
             console.log('Syncing emails...');
 
             // Add visual indicator for real data processing
@@ -1433,6 +1469,19 @@
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
+        }
+
+        function saveEmailSettings() {
+            const maxEmails = document.getElementById('max-emails').value;
+            const emailDays = document.getElementById('email-days').value;
+
+            const settings = {
+                maxEmails: parseInt(maxEmails, 10) || 20,
+                emailDays: parseInt(emailDays, 10) || 7
+            };
+
+            localStorage.setItem('emailSettings', JSON.stringify(settings));
+            alert('Email settings saved!');
         }
 
         // Initialize the app when DOM is loaded
