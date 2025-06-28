@@ -863,6 +863,9 @@
             }
         }
 
+        // Make functions globally accessible
+        window.toggleMobileMenu = toggleMobileMenu;
+
         function selectMobileTab(tabName, displayName) {
             // Update the page title
             const pageTitle = document.getElementById('current-page-title');
@@ -891,6 +894,12 @@
             // Show the selected tab content
             showTab(tabName);
         }
+
+        // Make functions globally accessible
+        window.selectMobileTab = selectMobileTab;
+
+        // Make core functions globally accessible
+        window.showTab = showTab;
 
         // Update mobile nav when desktop tabs are clicked
         function updateMobileNavState(tabName) {
