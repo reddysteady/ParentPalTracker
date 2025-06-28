@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { createGmailService } from './gmail-service';
 import { processIncomingEmail } from './email-service';
 import { storage } from './storage';
+import { and } from 'drizzle-orm';
 
 const router = Router();
 
@@ -35,14 +36,14 @@ router.get('/api/users', async (req, res) => {
 router.post('/api/users', async (req, res) => {
   try {
     const { email, name, customEmailAddress, phoneNumber } = req.body;
-    
+
     // Check if user already exists by email
     const existingUser = await db.select().from(users).where(eq(users.email, email));
     if (existingUser.length > 0) {
       console.log('User already exists:', existingUser[0]);
       return res.json(existingUser[0]); // Return existing user instead of error
     }
-    
+
     const newUser = await db.insert(users).values({
       email,
       name,
@@ -345,9 +346,13 @@ router.post('/api/gmail/setup', async (req, res) => {
   }
 });
 
+// Gmail sync endpoint - fetch real emails from Gmail
 router.post('/api/gmail/sync/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
+
+    console.log('Starting Gmail sync for user:', userId);
+
     const { tokens } = req.body;
 
     console.log('📧 Gmail sync request for user:', userId);
@@ -366,7 +371,7 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
 
     console.log('📧 Creating Gmail service...');
     const gmailService = createGmailService();
-    
+
     // Set tokens and validate them
     gmailService.setTokens(tokens);
 
@@ -384,7 +389,7 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
     });
   } catch (error: any) {
     console.error('❌ Error syncing Gmail:', error);
-    
+
     // Check if error is due to token expiration or authentication issues
     if (error.message?.includes('invalid_grant') || 
         error.message?.includes('Token has been expired') ||
@@ -422,7 +427,7 @@ router.get('/api/users/:userId/domains', async (req: Request<{ userId: string }>
   try {
     const userId = parseInt(req.params.userId);
     const user = await storage.getUser(userId);
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -439,7 +444,7 @@ router.post('/api/users/:userId/domains', async (req: Request<{ userId: string }
   try {
     const userId = parseInt(req.params.userId);
     const { domain } = req.body;
-    
+
     if (!domain || typeof domain !== 'string') {
       return res.status(400).json({ error: 'Domain is required' });
     }
@@ -468,7 +473,7 @@ router.delete('/api/users/:userId/domains', async (req: Request<{ userId: string
   try {
     const userId = parseInt(req.params.userId);
     const { domain } = req.body;
-    
+
     if (!domain || typeof domain !== 'string') {
       return res.status(400).json({ error: 'Domain is required' });
     }
@@ -495,14 +500,14 @@ router.get('/api/users/:userId/stats', async (req: Request<{ userId: string }>, 
   try {
     const userId = parseInt(req.params.userId);
     const user = await storage.getUser(userId);
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     const emails = await storage.getEmailsByUserId(userId);
     const events = await storage.getEventsByUserId(userId);
-    
+
     const stats = {
       emailsProcessed: emails.length,
       eventsExtracted: events.length,

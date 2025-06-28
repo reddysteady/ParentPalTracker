@@ -403,18 +403,18 @@
             <!-- Sync Settings - Initially Hidden -->
             <div class="card" id="sync-settings" style="display: none;">
                 <h3>⚙️ Email Processing Settings</h3>
-                
+
                 <!-- School Domains Section -->
                 <div style="margin-top: 20px;">
                     <h4>School Email Domains</h4>
                     <p style="color: #666; font-size: 14px; margin: 5px 0;">Add your school's email domains to filter and process only relevant emails. This helps reduce processing costs and improves accuracy.</p>
-                    
+
                     <div style="display: flex; gap: 10px; margin: 15px 0;">
                         <input type="text" id="domain-input" placeholder="e.g., hillviewschool.edu" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         <button onclick="addDomain()" class="btn-primary">Add Domain</button>
                     </div>
                     <p style="color: #888; font-size: 12px;">Enter just the domain name (e.g., "school.edu" not "admin@school.edu")</p>
-                    
+
                     <div style="margin-top: 15px;">
                         <h5>Configured Domains:</h5>
                         <div id="domains-container">
@@ -422,7 +422,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Processing Statistics Section -->
                 <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
                     <h4>Email Processing Statistics</h4>
@@ -441,7 +441,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="margin-top: 20px;">
                     <button onclick="toggleSyncSettings()" class="btn-secondary">Hide Settings</button>
                 </div>
@@ -522,7 +522,7 @@
         function showTab(tabName) {
             // Store current tab in localStorage
             localStorage.setItem('currentTab', tabName);
-            
+
             // Hide all tab contents
             const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => {
@@ -826,12 +826,12 @@
 
             try {
                 emailList.innerHTML = '<div class="loading">Loading emails...</div>';
-                
+
                 const response = await fetch('/api/emails');
                 if (!response.ok) {
                     throw new Error('Failed to fetch emails');
                 }
-                
+
                 const emails = await response.json();
                 console.log('Loaded emails:', emails.length);
                 console.log('Sample email structure:', emails[0]);
@@ -883,9 +883,9 @@
         function toggleSyncSettings() {
             const settingsDiv = document.getElementById('sync-settings');
             const isHidden = settingsDiv.style.display === 'none';
-            
+
             settingsDiv.style.display = isHidden ? 'block' : 'none';
-            
+
             // Update button text
             const buttons = document.querySelectorAll('[onclick="toggleSyncSettings()"]');
             buttons.forEach(button => {
@@ -961,7 +961,7 @@
                 if (result.success) {
                     updateStatus(`✓ ${result.message}`);
                     await loadEmailList();
-                    
+
                     // Update statistics
                     document.getElementById('emails-processed').textContent = result.processed || 0;
                     document.getElementById('last-sync').textContent = new Date().toLocaleString();
@@ -1005,13 +1005,13 @@
             if (rawTokens === 'null' || rawTokens === '{}' || rawTokens === 'undefined' || rawTokens === null) {
                 localStorage.removeItem('gmailTokens');
             }
-            
+
             // Get fresh token value after cleanup
             const tokens = localStorage.getItem('gmailTokens');
             const statusElement = document.getElementById('gmailStatus');
             const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
             const syncButtons = document.querySelectorAll('button[onclick="syncGmail()"]');
-            
+
             console.log('Gmail connection check:', { 
                 rawTokens: rawTokens,
                 cleanedTokens: tokens,
@@ -1038,7 +1038,7 @@
                     console.error('Error parsing tokens:', e);
                     validTokens = false;
                 }
-                
+
                 if (validTokens) {
                     statusElement.innerHTML = `
                         <div class="alert alert-success">
@@ -1205,7 +1205,7 @@
             // Handle both old string format and new object format for backward compatibility
             if (event.data === 'gmail-connected' || (event.data && event.data.type === 'gmail-connected')) {
                 console.log('Gmail connection successful! Updating UI...');
-                
+
                 // Store tokens if provided in the new format
                 if (event.data && event.data.tokens) {
                     localStorage.setItem('gmailTokens', JSON.stringify(event.data.tokens));
@@ -1215,7 +1215,7 @@
                         hasRefreshToken: !!event.data.tokens.refresh_token
                     });
                 }
-                
+
                 // Update UI immediately
                 setTimeout(() => {
                     const storedTokens = localStorage.getItem('gmailTokens');
@@ -1223,7 +1223,7 @@
                         hasTokens: !!storedTokens,
                         firstChars: storedTokens?.substring(0, 50) + '...'
                     });
-                    
+
                     checkGmailConnection();
                     alert('Gmail connected successfully! You can now sync your emails.');
                 }, 100);
@@ -1243,7 +1243,7 @@
                 if (response.ok) {
                     const user = await response.json();
                     const domains = user.schoolDomains || [];
-                    
+
                     if (domains.length === 0) {
                         container.innerHTML = '<p style="color: #666; font-style: italic;">No domains configured yet. Add domains above to filter school emails.</p>';
                     } else {
@@ -1266,12 +1266,12 @@
         async function addDomain() {
             const input = document.getElementById('domain-input');
             const domain = input.value.trim();
-            
+
             if (!domain) {
                 alert('Please enter a domain name');
                 return;
             }
-            
+
             // Basic domain validation
             if (!domain.includes('.') || domain.includes('@') || domain.includes('http')) {
                 alert('Please enter a valid domain name (e.g., "school.edu")');
@@ -1286,7 +1286,7 @@
                     },
                     body: JSON.stringify({ domain })
                 });
-                
+
                 if (response.ok) {
                     input.value = '';
                     loadDomains();
@@ -1312,7 +1312,7 @@
                     },
                     body: JSON.stringify({ domain })
                 });
-                
+
                 if (response.ok) {
                     loadDomains();
                     alert('Domain removed successfully!');
@@ -1332,11 +1332,11 @@
                 const response = await fetch('/api/users/1/stats');
                 if (response.ok) {
                     const stats = await response.json();
-                    
+
                     const emailsProcessed = document.getElementById('emails-processed');
                     const eventsExtracted = document.getElementById('events-extracted');
                     const lastSync = document.getElementById('last-sync');
-                    
+
                     if (emailsProcessed) emailsProcessed.textContent = stats.emailsProcessed || 0;
                     if (eventsExtracted) eventsExtracted.textContent = stats.eventsExtracted || 0;
                     if (lastSync) lastSync.textContent = stats.lastSync || 'Never';
@@ -1364,7 +1364,7 @@
 
             // Check Gmail connection status
             checkGmailConnection();
-            
+
             // Load domain settings and stats if Gmail tab is active
             if (currentTab === 'gmail') {
                 loadDomains();
