@@ -30,20 +30,14 @@
         header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 2rem 0;
+            padding: 1rem 0;
             margin-bottom: 2rem;
         }
 
         h1 {
             text-align: center;
             font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            opacity: 0.9;
+            margin-bottom: 0;
         }
 
         .nav-tabs {
@@ -449,7 +443,6 @@
     <header>
         <div class="container">
             <h1>ParentPal</h1>
-            <p class="subtitle">Smart School Email & Schedule Management</p>
         </div>
     </header>
 
@@ -784,12 +777,56 @@
         let currentUser = null;
         let gmailTokens = null;
 
-        // Tab navigation function
+        // Define mobile menu functions immediately to prevent "not defined" errors
+        function toggleMobileMenu() {
+            const dropdown = document.getElementById('mobile-nav-dropdown');
+            if (dropdown) {
+                const computedStyle = window.getComputedStyle(dropdown);
+                const isCurrentlyHidden = dropdown.style.display === 'none' || 
+                                        dropdown.style.display === '' ||
+                                        computedStyle.display === 'none';
+                
+                dropdown.style.display = isCurrentlyHidden ? 'block' : 'none';
+                
+                const toggleButton = document.querySelector('.mobile-menu-toggle');
+                if (toggleButton) {
+                    toggleButton.textContent = isCurrentlyHidden ? '✕' : '☰';
+                }
+                
+                console.log('Mobile menu toggled:', isCurrentlyHidden ? 'opened' : 'closed');
+            } else {
+                console.error('Mobile dropdown element not found');
+            }
+        }
+
+        function selectMobileTab(tabName, displayName) {
+            const pageTitle = document.getElementById('current-page-title');
+            if (pageTitle) {
+                pageTitle.textContent = displayName;
+            }
+
+            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+            mobileNavItems.forEach(item => {
+                item.classList.remove('active');
+            });
+
+            const activeItem = document.querySelector(`[onclick="selectMobileTab('${tabName}', '${displayName}')"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+
+            const dropdown = document.getElementById('mobile-nav-dropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+
+            showTab(tabName);
+        }
+
+        // Tab navigation function (needed by mobile menu)
         function showTab(tabName) {
-            // Store current tab in localStorage
             localStorage.setItem('currentTab', tabName);
 
-            // Hide all tab contents
             const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => {
                 if (tab && tab.classList) {
@@ -797,7 +834,6 @@
                 }
             });
 
-            // Remove active class from all desktop tab buttons
             const tabButtons = document.querySelectorAll('.nav-tab');
             tabButtons.forEach(button => {
                 if (button && button.classList) {
@@ -805,26 +841,23 @@
                 }
             });
 
-            // Show selected tab
             const selectedTab = document.getElementById(tabName);
             if (selectedTab && selectedTab.classList) {
                 selectedTab.classList.add('active');
             }
 
-            // Add active class to clicked desktop button
             const activeButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
             if (activeButton && activeButton.classList) {
                 activeButton.classList.add('active');
             }
 
-            // Update mobile navigation state
             updateMobileNavState(tabName);
 
             // Load tab-specific data
             if (tabName === 'gmail') {
                 checkGmailConnection();
-                hideGmailSection(); // Show connection section by default
-                loadEmailSettings(); // Load saved email settings
+                hideGmailSection();
+                loadEmailSettings();
             } else if (tabName === 'events') {
                 loadEvents();
                 loadChildrenOptions();
@@ -835,73 +868,7 @@
             }
         }
 
-        // Mobile navigation functions
-        function toggleMobileMenu() {
-            const dropdown = document.getElementById('mobile-nav-dropdown');
-            if (dropdown) {
-                // Get computed style to check actual display value
-                const computedStyle = window.getComputedStyle(dropdown);
-                const isCurrentlyHidden = dropdown.style.display === 'none' || 
-                                        dropdown.style.display === '' ||
-                                        computedStyle.display === 'none';
-                
-                dropdown.style.display = isCurrentlyHidden ? 'block' : 'none';
-                
-                // Update button text/icon to indicate state
-                const toggleButton = document.querySelector('.mobile-menu-toggle');
-                if (toggleButton) {
-                    toggleButton.textContent = isCurrentlyHidden ? '✕' : '☰';
-                }
-                
-                console.log('Mobile menu toggled:', isCurrentlyHidden ? 'opened' : 'closed', {
-                    dropdownId: dropdown.id,
-                    styleDisplay: dropdown.style.display,
-                    computedDisplay: computedStyle.display
-                });
-            } else {
-                console.error('Mobile dropdown element not found');
-            }
-        }
-
-        // Make functions globally accessible
-        window.toggleMobileMenu = toggleMobileMenu;
-
-        function selectMobileTab(tabName, displayName) {
-            // Update the page title
-            const pageTitle = document.getElementById('current-page-title');
-            if (pageTitle) {
-                pageTitle.textContent = displayName;
-            }
-
-            // Remove active class from all mobile nav items
-            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-            mobileNavItems.forEach(item => {
-                item.classList.remove('active');
-            });
-
-            // Add active class to selected mobile nav item
-            const activeItem = document.querySelector(`[onclick="selectMobileTab('${tabName}', '${displayName}')"]`);
-            if (activeItem) {
-                activeItem.classList.add('active');
-            }
-
-            // Close the dropdown
-            const dropdown = document.getElementById('mobile-nav-dropdown');
-            if (dropdown) {
-                dropdown.style.display = 'none';
-            }
-
-            // Show the selected tab content
-            showTab(tabName);
-        }
-
-        // Make functions globally accessible
-        window.selectMobileTab = selectMobileTab;
-
-        // Make core functions globally accessible
-        window.showTab = showTab;
-
-        // Update mobile nav when desktop tabs are clicked
+        // Placeholder for updateMobileNavState function
         function updateMobileNavState(tabName) {
             const tabNameToDisplay = {
                 'dashboard': 'Dashboard',
@@ -916,7 +883,6 @@
                 pageTitle.textContent = tabNameToDisplay[tabName];
             }
 
-            // Update mobile nav active state
             const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
             mobileNavItems.forEach(item => {
                 item.classList.remove('active');
@@ -927,6 +893,17 @@
                 mobileActiveItem.classList.add('active');
             }
         }
+
+        // Make functions globally available immediately
+        window.toggleMobileMenu = toggleMobileMenu;
+        window.selectMobileTab = selectMobileTab;
+        window.showTab = showTab;
+
+        // Tab navigation function (moved to top)
+
+        // Mobile navigation functions (moved to top to prevent "not defined" errors)
+
+        // Update mobile nav when desktop tabs are clicked (moved to top)
 
         // Dashboard functions
         function loadDashboard() {
