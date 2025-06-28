@@ -244,7 +244,7 @@
             border: 1px solid #e1e8ed;
         }
 
-        .mobile-settings-dropdown {
+        .mobile-action-dropdown {
             background: white;
             padding: 20px;
             border-radius: 8px;
@@ -252,20 +252,71 @@
             margin-bottom: 20px;
         }
 
-        .mobile-setting-panel {
+        .mobile-action-panel {
             margin-top: 15px;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
         }
 
+        .accordion {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .accordion-header:hover {
+            background: #e9ecef;
+        }
+
+        .accordion-header.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .accordion-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .accordion-content.active {
+            display: block;
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-header.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .desktop-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         /* Mobile responsive styles */
         @media (max-width: 768px) {
-            #sync-settings {
+            .desktop-buttons {
                 display: none !important;
             }
 
-            .mobile-settings-dropdown {
+            .mobile-action-dropdown {
                 display: block !important;
             }
 
@@ -281,8 +332,12 @@
 
         /* Desktop styles */
         @media (min-width: 769px) {
-            .mobile-settings-dropdown {
+            .mobile-action-dropdown {
                 display: none !important;
+            }
+
+            .desktop-buttons {
+                display: flex !important;
             }
         }
         @media (max-width: 768px) {
@@ -420,18 +475,32 @@
 
         <!-- Gmail Integration Tab -->
         <div id="gmail" class="tab-content">
-            <div class="card">
+            <!-- Gmail Connection Status -->
+            <div class="card" id="gmail-connection">
                 <h3>📧 Gmail Integration</h3>
                 <div id="gmailStatus">
                     <div class="loading">Checking Gmail connection...</div>
                 </div>
 
-                <div style="margin-top: 20px;">
+                <!-- Desktop Buttons -->
+                <div class="desktop-buttons" style="margin-top: 20px;">
                     <button onclick="connectGmail()" class="btn-success">Connect Gmail</button>
-                    <button onclick="syncGmail()" class="btn-secondary" style="margin-left: 10px;" disabled>Sync Emails (Connect Gmail First)</button>
-                    <button onclick="toggleSyncSettings()" class="btn-secondary" style="margin-left: 10px;">Sync Settings</button>
-                    <button onclick="startMonitoring()" class="btn-secondary" style="margin-left: 10px;">Start Monitoring</button>
-                    <button onclick="debugOAuth()" class="btn-secondary" style="margin-left: 10px;">Debug OAuth</button>
+                    <button onclick="showGmailSection('emails')" class="btn-secondary" disabled>Sync Emails</button>
+                    <button onclick="showGmailSection('settings')" class="btn-secondary">Sync Settings</button>
+                    <button onclick="startMonitoring()" class="btn-secondary">Start Monitoring</button>
+                    <button onclick="debugOAuth()" class="btn-secondary">Debug OAuth</button>
+                </div>
+
+                <!-- Mobile Action Dropdown -->
+                <div class="mobile-action-dropdown">
+                    <label for="mobile-action-select">Gmail Actions:</label>
+                    <select id="mobile-action-select" onchange="handleMobileActionChange(this)" style="width: 100%; padding: 10px; margin-top: 10px;">
+                        <option value="">Select an action...</option>
+                        <option value="emails">Sync Emails</option>
+                        <option value="settings">Sync Settings</option>
+                        <option value="monitoring">Start Monitoring</option>
+                        <option value="debug">Debug OAuth</option>
+                    </select>
                 </div>
 
                 <div id="debugInfo" style="margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px; display: none;">
@@ -441,89 +510,104 @@
             </div>
 
             <!-- Email List Section -->
-            <div class="card">
+            <div class="card" id="email-section" style="display: none;">
                 <h3>📬 Synced Emails</h3>
+                <div style="margin-bottom: 15px;">
+                    <button onclick="syncGmail()" class="btn-primary">Sync Emails</button>
+                    <button onclick="hideGmailSection()" class="btn-secondary" style="margin-left: 10px;">Back to Gmail Settings</button>
+                </div>
                 <div id="emailList">
                     <div class="loading">No emails synced yet. Click "Sync Emails" to get started.</div>
                 </div>
             </div>
 
-            <!-- Sync Settings - Initially Hidden -->
-            <div class="card" id="sync-settings" style="display: none;">
-                <h3>⚙️ Email Processing Settings</h3>
-
-                <!-- Email Limits Section -->
-                <div style="margin-top: 20px;">
-                    <h4>Email Processing Limits</h4>
-                    <p style="color: #666; font-size: 14px; margin: 5px 0;">Configure the maximum number of emails to process and the age of emails to consider.  This helps reduce processing costs and improves accuracy.</p>
-
-                    <div style="display: flex; flex-direction: column; gap: 10px; margin: 15px 0;">
-                        <div>
-                            <label for="max-emails">Max Emails to Process:</label>
-                            <input type="number" id="max-emails" placeholder="e.g., 20" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label for="email-days">Email Age (Days):</label>
-                            <input type="number" id="email-days" placeholder="e.g., 7" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                    </div>
-                    <button onclick="saveEmailSettings()" class="btn-primary">Save Email Settings</button>
+            <!-- Sync Settings Section with Accordion -->
+            <div class="card" id="settings-section" style="display: none;">
+                <h3>⚙️ Sync Settings</h3>
+                <div style="margin-bottom: 15px;">
+                    <button onclick="hideGmailSection()" class="btn-secondary">Back to Gmail Settings</button>
                 </div>
 
-                <!-- School Domains Section -->
-                <div style="margin-top: 20px;">
-                    <h4>School Email Domains</h4>
-                    <p style="color: #666; font-size: 14px; margin: 5px 0;">Add your school's email domains to filter and process only relevant emails. This helps reduce processing costs and improves accuracy.</p>
-
-                    <div style="display: flex; gap: 10px; margin: 15px 0;">
-                        <input type="text" id="domain-input" placeholder="e.g., hillviewschool.edu" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        <button onclick="addDomain()" class="btn-primary">Add Domain</button>
+                <!-- Gmail Settings Accordion -->
+                <div class="accordion">
+                    <div class="accordion-header active" onclick="toggleAccordion('gmail-settings-accordion')">
+                        <span>📧 Gmail Settings</span>
+                        <span class="accordion-icon">▼</span>
                     </div>
-                    <p style="color: #888; font-size: 12px;">Enter just the domain name (e.g., "school.edu" not "admin@school.edu")</p>
-
-                    <div style="margin-top: 15px;">
-                        <h5>Configured Domains:</h5>
-                        <div id="domains-container">
-                            <div class="loading">Loading domains...</div>
+                    <div class="accordion-content active" id="gmail-settings-accordion">
+                        <p style="color: #666; margin-bottom: 15px;">Configure your Gmail connection and basic settings.</p>
+                        <div id="gmailStatusSettings">
+                            <div class="loading">Loading Gmail status...</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Processing Statistics Section -->
-                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <h4>Email Processing Statistics</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
-                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                            <div style="font-size: 24px; font-weight: bold; color: #007bff;" id="emails-processed">0</div>
-                            <div style="font-size: 12px; color: #666;">Emails Processed</div>
+                <!-- Email Processing Limits Accordion -->
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion('email-limits-accordion')">
+                        <span>⚙️ Email Processing Limits</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="email-limits-accordion">
+                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Configure the maximum number of emails to process and the age of emails to consider. This helps reduce processing costs and improves accuracy.</p>
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin: 15px 0;">
+                            <div>
+                                <label for="max-emails">Max Emails to Process:</label>
+                                <input type="number" id="max-emails" placeholder="e.g., 20" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                            <div>
+                                <label for="email-days">Email Age (Days):</label>
+                                <input type="number" id="email-days" placeholder="e.g., 7" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
                         </div>
-                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                            <div style="font-size: 24px; font-weight: bold; color: #28a745;" id="events-extracted">0</div>
-                            <div style="font-size: 12px; color: #666;">Events Extracted</div>
+                        <button onclick="saveEmailSettings()" class="btn-primary">Save Email Settings</button>
+                    </div>
+                </div>
+
+                <!-- School Email Domains Accordion -->
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion('school-domains-accordion')">
+                        <span>🏫 School Email Domains</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="school-domains-accordion">
+                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Add your school's email domains to filter and process only relevant emails. This helps reduce processing costs and improves accuracy.</p>
+                        <div style="display: flex; gap: 10px; margin: 15px 0;">
+                            <input type="text" id="domain-input" placeholder="e.g., hillviewschool.edu" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <button onclick="addDomain()" class="btn-primary">Add Domain</button>
                         </div>
-                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                            <div style="font-size: 24px; font-weight: bold; color: #6c757d;" id="last-sync">Never</div>
-                            <div style="font-size: 12px; color: #666;">Last Sync</div>
+                        <p style="color: #888; font-size: 12px;">Enter just the domain name (e.g., "school.edu" not "admin@school.edu")</p>
+                        <div style="margin-top: 15px;">
+                            <h5>Configured Domains:</h5>
+                            <div id="domains-container">
+                                <div class="loading">Loading domains...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div style="margin-top: 20px;">
-                    <button onclick="toggleSyncSettings()" class="btn-secondary">Hide Settings</button>
-                </div>
-            </div>
-
-             <!-- Mobile Sync Settings Dropdown -->
-             <div class="mobile-settings-dropdown">
-                <select onchange="handleMobileSettingsChange(this)">
-                    <option value="">Gmail Settings</option>
-                    <option value="emailLimits">Email Processing Limits</option>
-                    <option value="schoolDomains">School Email Domains</option>
-                    <option value="processingStats">Processing Statistics</option>
-                </select>
-            
-                <div id="mobile-settings-content">
-                    <!-- Content will be dynamically updated here -->
+                <!-- Processing Statistics Accordion -->
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion('processing-stats-accordion')">
+                        <span>📊 Processing Statistics</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="processing-stats-accordion">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 24px; font-weight: bold; color: #007bff;" id="emails-processed">0</div>
+                                <div style="font-size: 12px; color: #666;">Emails Processed</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 24px; font-weight: bold; color: #28a745;" id="events-extracted">0</div>
+                                <div style="font-size: 12px; color: #666;">Events Extracted</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 24px; font-weight: bold; color: #6c757d;" id="last-sync">Never</div>
+                                <div style="font-size: 12px; color: #666;">Last Sync</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -634,9 +718,8 @@
             // Load tab-specific data
             if (tabName === 'gmail') {
                 checkGmailConnection();
-                loadEmailList();
-                loadDomains();
-                loadProcessingStats();
+                hideGmailSection(); // Show connection section by default
+                loadEmailSettings(); // Load saved email settings
             } else if (tabName === 'events') {
                 loadEvents();
                 loadChildrenOptions();
@@ -1197,7 +1280,7 @@
             const tokens = localStorage.getItem('gmailTokens');
             const statusElement = document.getElementById('gmailStatus');
             const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
-            const syncButtons = document.querySelectorAll('button[onclick="syncGmail()"]');
+            const syncButtons = document.querySelectorAll('button[onclick*="emails"]');
 
             console.log('Gmail connection check:', { 
                 rawTokens: rawTokens,
@@ -1226,43 +1309,44 @@
                     validTokens = false;
                 }
 
-                if (validTokens) {
-                    statusElement.innerHTML = `
-                        <div class="alert alert-success">
-                            <span class="status-indicator status-connected"></span>
-                            <strong>Gmail Connected</strong><br>
-                            Your Gmail account is connected and ready to sync school emails.
-                        </div>
-                    `;
-                    // Enable sync button, disable connect button
-                    connectButtons.forEach(btn => {
+                const statusHtml = validTokens 
+                    ? `<div class="alert alert-success">
+                           <span class="status-indicator status-connected"></span>
+                           <strong>Gmail Connected</strong><br>
+                           Your Gmail account is connected and ready to sync school emails.
+                       </div>`
+                    : `<div class="alert alert-info">
+                           <span class="status-indicator status-disconnected"></span>
+                           <strong>Connect Gmail Account</strong><br>
+                           Connect your Gmail to automatically sync school emails and extract events.
+                       </div>`;
+
+                statusElement.innerHTML = statusHtml;
+
+                // Update buttons
+                connectButtons.forEach(btn => {
+                    if (validTokens) {
                         btn.disabled = true;
                         btn.textContent = 'Gmail Connected';
                         btn.style.opacity = '0.6';
-                    });
-                    syncButtons.forEach(btn => {
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = 'Connect Gmail';
+                        btn.style.opacity = '1';
+                    }
+                });
+
+                syncButtons.forEach(btn => {
+                    if (validTokens) {
                         btn.disabled = false;
                         btn.textContent = 'Sync Emails';
                         btn.style.opacity = '1';
-                    });
-                } else {
-                    statusElement.innerHTML = `
-                        <div class="alert alert-info">
-                            <span class="status-indicator status-disconnected"></span>
-                            <strong>Connect Gmail Account</strong><br>
-                            Connect your Gmail to automatically sync school emails and extract events.
-                        </div>
-                    `;
-                    // Enable connect button, disable sync button
-                    connectButtons.forEach(btn => {
-                        btn.disabled = false;
-                        btn.textContent = 'Connect Gmail';
-                    });
-                    syncButtons.forEach(btn => {
+                    } else {
                         btn.disabled = true;
                         btn.textContent = 'Sync Emails (Connect Gmail First)';
-                    });
-                }
+                        btn.style.opacity = '0.6';
+                    }
+                });
             }
         }
 
@@ -1546,6 +1630,78 @@
             alert('Email settings saved!');
         }
 
+        // Gmail section management
+        function showGmailSection(section) {
+            // Hide all sections
+            document.getElementById('gmail-connection').style.display = 'none';
+            document.getElementById('email-section').style.display = 'none';
+            document.getElementById('settings-section').style.display = 'none';
+
+            if (section === 'emails') {
+                document.getElementById('email-section').style.display = 'block';
+                loadEmailList();
+            } else if (section === 'settings') {
+                document.getElementById('settings-section').style.display = 'block';
+                loadDomains();
+                loadProcessingStats();
+                // Copy Gmail status to settings section
+                const gmailStatus = document.getElementById('gmailStatus').innerHTML;
+                document.getElementById('gmailStatusSettings').innerHTML = gmailStatus;
+            }
+        }
+
+        function hideGmailSection() {
+            // Show connection section and hide others
+            document.getElementById('gmail-connection').style.display = 'block';
+            document.getElementById('email-section').style.display = 'none';
+            document.getElementById('settings-section').style.display = 'none';
+        }
+
+        // Mobile action dropdown handler
+        function handleMobileActionChange(selectElement) {
+            const selectedValue = selectElement.value;
+            
+            if (selectedValue === 'emails') {
+                showGmailSection('emails');
+            } else if (selectedValue === 'settings') {
+                showGmailSection('settings');
+            } else if (selectedValue === 'monitoring') {
+                startMonitoring();
+            } else if (selectedValue === 'debug') {
+                debugOAuth();
+            }
+
+            // Reset dropdown
+            selectElement.value = '';
+        }
+
+        // Accordion functionality
+        function toggleAccordion(accordionId) {
+            const content = document.getElementById(accordionId);
+            const header = content.previousElementSibling;
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                header.classList.remove('active');
+            } else {
+                content.classList.add('active');
+                header.classList.add('active');
+            }
+        }
+
+        // Load saved email settings into form
+        function loadEmailSettings() {
+            const savedSettings = localStorage.getItem('emailSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                const maxEmailsInput = document.getElementById('max-emails');
+                const emailDaysInput = document.getElementById('email-days');
+                
+                if (maxEmailsInput) maxEmailsInput.value = settings.maxEmails || 20;
+                if (emailDaysInput) emailDaysInput.value = settings.emailDays || 7;
+            }
+        }
+
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing app...');
@@ -1564,177 +1720,13 @@
 
             // Check Gmail connection status
             checkGmailConnection();
-
-            // Load domain settings and stats if Gmail tab is active
-            if (currentTab === 'gmail') {
-                loadDomains();
-                loadProcessingStats();
-            }
         });
 
         function updateStatus(message) {
             console.log(message);
         }
 
-         function handleMobileSettingsChange(selectElement) {
-            const selectedValue = selectElement.value;
-            let content = '';
-
-            if (selectedValue === 'emailLimits') {
-                content = `
-                    <div class="mobile-setting-panel">
-                        <h4>Email Processing Limits</h4>
-                        <label for="mobile-max-emails">Max Emails:</label>
-                        <input type="number" id="mobile-max-emails" placeholder="e.g., 20">
-                        <label for="mobile-email-days">Email Age (Days):</label>
-                        <input type="number" id="mobile-email-days" placeholder="e.g., 7">
-                        <button onclick="saveMobileEmailSettings()">Save</button>
-                    </div>
-                `;
-            } else if (selectedValue === 'schoolDomains') {
-                content = `
-                    <div class="mobile-setting-panel">
-                        <h4>School Email Domains</h4>
-                        <label for="mobile-domain-input">Domain:</label>
-                        <input type="text" id="mobile-domain-input" placeholder="e.g., school.edu">
-                        <button onclick="addMobileDomain()">Add Domain</button>
-                        <div id="mobile-domains-container">Loading...</div>
-                    </div>
-                `;
-                loadMobileDomains();
-            } else if (selectedValue === 'processingStats') {
-                content = `
-                    <div class="mobile-setting-panel">
-                        <h4>Processing Statistics</h4>
-                        <p>Emails Processed: <span id="mobile-emails-processed">0</span></p>
-                        <p>Events Extracted: <span id="mobile-events-extracted">0</span></p>
-                        <p>Last Sync: <span id="mobile-last-sync">Never</span></p>
-                    </div>
-                `;
-                loadMobileProcessingStats();
-            }
-
-            document.getElementById('mobile-settings-content').innerHTML = content;
-        }
-
-        async function loadMobileDomains() {
-            const container = document.getElementById('mobile-domains-container');
-            if (!container) return;
-
-            try {
-                const response = await fetch('/api/users/1/domains');
-                if (response.ok) {
-                    const user = await response.json();
-                    const domains = user.schoolDomains || [];
-
-                    if (domains.length === 0) {
-                        container.innerHTML = '<p style="color: #666; font-style: italic;">No domains configured.</p>';
-                    } else {
-                        container.innerHTML = domains.map(domain => `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin: 5px 0;">
-                                <span>${domain}</span>
-                                <button onclick="removeMobileDomain('${domain}')" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Remove</button>
-                            </div>
-                        `).join('');
-                    }
-                } else {
-                    container.innerHTML = '<p style="color: #dc3545;">Failed to load domains</p>';
-                }
-            } catch (error) {
-                console.error('Error loading domains:', error);
-                container.innerHTML = '<p style="color: #dc3545;">Error loading domains</p>';
-            }
-        }
-
-        async function addMobileDomain() {
-            const input = document.getElementById('mobile-domain-input');
-            const domain = input.value.trim();
-
-            if (!domain) {
-                alert('Please enter a domain name');
-                return;
-            }
-
-            if (!domain.includes('.') || domain.includes('@') || domain.includes('http')) {
-                alert('Please enter a valid domain name (e.g., "school.edu")');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/users/1/domains', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ domain })
-                });
-
-                if (response.ok) {
-                    input.value = '';
-                    loadMobileDomains();
-                    alert('Domain added successfully!');
-                } else {
-                    const error = await response.text();
-                    alert('Failed to add domain: ' + error);
-                }
-            } catch (error) {
-                console.error('Error adding domain:', error);
-                alert('Error adding domain');
-            }
-        }
-
-        async function removeMobileDomain(domain) {
-            if (!confirm(`Remove domain "${domain}"?`)) return;
-
-            try {
-                const response = await fetch('/api/users/1/domains', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ domain })
-                });
-
-                if (response.ok) {
-                    loadMobileDomains();
-                    alert('Domain removed successfully!');
-                } else {
-                    const error = await response.text();
-                    alert('Failed to remove domain: ' + error);
-                }
-            } catch (error) {
-                console.error('Error removing domain:', error);
-                alert('Error removing domain');
-            }
-        }
-
-        async function loadMobileProcessingStats() {
-            try {
-                const response = await fetch('/api/users/1/stats');
-                if (response.ok) {
-                    const stats = await response.json();
-
-                    document.getElementById('mobile-emails-processed').textContent = stats.emailsProcessed || 0;
-                    document.getElementById('mobile-events-extracted').textContent = stats.eventsExtracted || 0;
-                    document.getElementById('mobile-last-sync').textContent = stats.lastSync || 'Never';
-                }
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
-
-        function saveMobileEmailSettings() {
-            const maxEmails = document.getElementById('mobile-max-emails').value;
-            const emailDays = document.getElementById('mobile-email-days').value;
-
-            const settings = {
-                maxEmails: parseInt(maxEmails, 10) || 20,
-                emailDays: parseInt(emailDays, 10) || 7
-            };
-
-            localStorage.setItem('emailSettings', JSON.stringify(settings));
-            alert('Email settings saved!');
-        }
+         
     </script>
 </body>
 </html>
