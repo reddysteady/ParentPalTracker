@@ -1166,6 +1166,12 @@
                     const dropdown = document.getElementById('mobile-nav-dropdown');
                     const toggleButton = document.querySelector('.mobile-menu-toggle');
                     
+                    console.log('Elements found:', {
+                        dropdown: !!dropdown,
+                        toggleButton: !!toggleButton,
+                        dropdownDisplay: dropdown?.style.display
+                    });
+                    
                     if (!dropdown) {
                         console.error('Mobile dropdown element not found');
                         return;
@@ -1194,13 +1200,18 @@
             }
 
             function selectMobileTab(tabName, displayName) {
+                console.log('📱 selectMobileTab called:', { tabName, displayName });
                 try {
                     const pageTitle = document.getElementById('current-page-title');
                     if (pageTitle) {
                         pageTitle.textContent = displayName;
+                    } else {
+                        console.warn('Page title element not found');
                     }
 
                     const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+                    console.log('Found mobile nav items:', mobileNavItems.length);
+                    
                     mobileNavItems.forEach(item => {
                         item.classList.remove('active');
                         if (item.dataset.tab === tabName) {
@@ -1213,11 +1224,15 @@
 
                     if (dropdown) {
                         dropdown.style.display = 'none';
+                    } else {
+                        console.warn('Mobile dropdown not found for closing');
                     }
 
                     if (toggleButton) {
                         toggleButton.textContent = '☰';
                         toggleButton.setAttribute('aria-expanded', 'false');
+                    } else {
+                        console.warn('Toggle button not found for reset');
                     }
 
                     showTab(tabName);
@@ -2395,9 +2410,15 @@
 
                 if (toggleButton) {
                     toggleButton.setAttribute('aria-expanded', 'false');
-                    // Add event listener instead of inline onclick
-                    toggleButton.addEventListener('click', toggleMobileMenu);
+                    // Remove any existing onclick and add event listener
+                    toggleButton.removeAttribute('onclick');
+                    toggleButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        toggleMobileMenu();
+                    });
                     console.log('Mobile menu toggle event listener attached');
+                } else {
+                    console.error('Mobile menu toggle button not found');
                 }
 
                 // Add event listeners to mobile nav items
@@ -2406,7 +2427,10 @@
                     const tabName = item.dataset.tab;
                     const displayName = item.dataset.display;
                     if (tabName && displayName) {
-                        item.addEventListener('click', () => selectMobileTab(tabName, displayName));
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            selectMobileTab(tabName, displayName);
+                        });
                     }
                 });
                 console.log('Mobile nav item event listeners attached to', mobileNavItems.length, 'items');
