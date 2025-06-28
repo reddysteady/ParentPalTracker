@@ -1,1685 +1,2083 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>ParentPal - School Email & Schedule Manager</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f5f7fa;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 0;
-        }
-
-        .nav-tabs {
-            display: flex;
-            background: white;
-            border-radius: 8px;
-            padding: 5px;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .nav-tab {
-            flex: 1;
-            padding: 12px 24px;
-            background: none;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            color: #333; /* Default text color */
-        }
-
-        .nav-tab.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .card {
-            background: white;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
-            border: 1px solid #e1e8ed;
-        }
-
-        .card h3 {
-            color: #2c3e50;
-            margin-bottom: 16px;
-            font-size: 1.4rem;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #555;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            background: #5a6fd8;
-            transform: translateY(-2px);
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-success {
-            background: #28a745;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .event-item, .child-item {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-
-        .event-date {
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .status-connected {
-            background-color: #28a745;
-        }
-
-        .status-disconnected {
-            background-color: #dc3545;
-        }
-
-        .alert {
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .alert-info {
-            background-color: #cce7ff;
-            border: 1px solid #b3d9ff;
-            color: #004085;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .error-message {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .card {
-            background: white;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
-            border: 1px solid #e1e8ed;
-        }
-
-        .mobile-action-dropdown {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .mobile-action-panel {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .accordion {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-
-        .accordion-header {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            cursor: pointer;
-            font-weight: 500;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.3s ease;
-        }
-
-        .accordion-header:hover {
-            background: #e9ecef;
-        }
-
-        .accordion-header.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .accordion-content {
-            padding: 20px;
-            display: none;
-        }
-
-        .accordion-content.active {
-            display: block;
-        }
-
-        .accordion-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .accordion-header.active .accordion-icon {
-            transform: rotate(180deg);
-        }
-
-        .desktop-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        /* Mobile Navigation Styles */
-        .mobile-nav {
-            display: none;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .mobile-nav-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e1e8ed;
-        }
-
-        .mobile-nav-header h2 {
-            margin: 0;
-            color: #2c3e50;
-            font-size: 1.2rem;
-        }
-
-        .mobile-menu-toggle {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .mobile-nav-dropdown {
-            border-top: 1px solid #e1e8ed;
-            background: #f8f9fa;
-        }
-
-        .mobile-nav-item {
-            display: block;
-            width: 100%;
-            padding: 15px 20px;
-            background: none;
-            border: none;
-            border-bottom: 1px solid #e1e8ed;
-            text-align: left;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            font-size: 16px;
-            color: #333;
-        }
-
-        .mobile-nav-item:hover {
-            background: #e9ecef;
-        }
-
-        .mobile-nav-item.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .mobile-nav-item:last-child {
-            border-bottom: none;
-        }
-
-        /* Desktop Navigation */
-        .desktop-nav {
-            display: flex;
-        }
-
-        /* Mobile responsive styles */
-        @media (max-width: 768px) {
-            .desktop-nav {
-                display: none !important;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            http-equiv="Cache-Control"
+            content="no-cache, no-store, must-revalidate"
+        />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
+        <title>ParentPal - School Email & Schedule Manager</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
             }
 
-            .mobile-nav {
-                display: block !important;
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f5f7fa;
             }
 
-            .desktop-buttons {
-                display: none !important;
-            }
-
-            .mobile-action-dropdown {
-                display: block !important;
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .btn-primary, .btn-secondary {
-                width: 100%;
-                margin-bottom: 10px;
-            }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 769px) {
-            .mobile-nav {
-                display: none !important;
-            }
-
-            .desktop-nav {
-                display: flex !important;
-            }
-
-            .mobile-action-dropdown {
-                display: none !important;
-            }
-
-            .desktop-buttons {
-                display: flex !important;
-            }
-        }
-        @media (max-width: 768px) {
             .container {
-                padding: 10px;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
             }
 
-            .nav-tabs {
-                flex-direction: column;
-            }
-
-            .nav-tab {
-                margin-bottom: 5px;
+            header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 1rem 0;
+                margin-bottom: 2rem;
             }
 
             h1 {
-                font-size: 2rem;
+                text-align: center;
+                font-size: 2.5rem;
+                margin-bottom: 0;
             }
-        }
-    </style>
-</head>
-<body>
-    <header>
+
+            .nav-tabs {
+                display: flex;
+                background: white;
+                border-radius: 8px;
+                padding: 5px;
+                margin-bottom: 2rem;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .nav-tab {
+                flex: 1;
+                padding: 12px 24px;
+                background: none;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-weight: 500;
+                color: #333; /* Default text color */
+            }
+
+            .nav-tab.active {
+                background: #667eea;
+                color: white;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            .card {
+                background: white;
+                padding: 24px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+                border: 1px solid #e1e8ed;
+            }
+
+            .card h3 {
+                color: #2c3e50;
+                margin-bottom: 16px;
+                font-size: 1.4rem;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+                color: #555;
+            }
+
+            input,
+            select,
+            textarea {
+                width: 100%;
+                padding: 12px;
+                border: 2px solid #e1e8ed;
+                border-radius: 8px;
+                font-size: 16px;
+                transition: border-color 0.3s ease;
+            }
+
+            input:focus,
+            select:focus,
+            textarea:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+
+            button {
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+
+            button:hover {
+                background: #5a6fd8;
+                transform: translateY(-2px);
+            }
+
+            button:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            .btn-secondary {
+                background: #6c757d;
+            }
+
+            .btn-secondary:hover {
+                background: #5a6268;
+            }
+
+            .btn-success {
+                background: #28a745;
+            }
+
+            .btn-success:hover {
+                background: #218838;
+            }
+
+            .btn-danger {
+                background: #dc3545;
+            }
+
+            .btn-danger:hover {
+                background: #c82333;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+            }
+
+            .event-item,
+            .child-item {
+                background: #f8f9fa;
+                padding: 16px;
+                border-radius: 8px;
+                border-left: 4px solid #667eea;
+            }
+
+            .event-date {
+                font-weight: bold;
+                color: #667eea;
+            }
+
+            .status-indicator {
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                margin-right: 8px;
+            }
+
+            .status-connected {
+                background-color: #28a745;
+            }
+
+            .status-disconnected {
+                background-color: #dc3545;
+            }
+
+            .alert {
+                padding: 16px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+
+            .alert-success {
+                background-color: #d4edda;
+                border: 1px solid #c3e6cb;
+                color: #155724;
+            }
+
+            .alert-danger {
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                color: #721c24;
+            }
+
+            .alert-info {
+                background-color: #cce7ff;
+                border: 1px solid #b3d9ff;
+                color: #004085;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: #666;
+            }
+
+            .error-message {
+                color: #dc3545;
+                font-size: 14px;
+                margin-top: 5px;
+            }
+
+            .card {
+                background: white;
+                padding: 24px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+                border: 1px solid #e1e8ed;
+            }
+
+            .mobile-action-dropdown {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
+
+            .mobile-action-panel {
+                margin-top: 15px;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 8px;
+            }
+
+            .accordion {
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                overflow: hidden;
+            }
+
+            .accordion-header {
+                background: #f8f9fa;
+                padding: 15px 20px;
+                cursor: pointer;
+                font-weight: 500;
+                border-bottom: 1px solid #ddd;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                transition: background-color 0.3s ease;
+            }
+
+            .accordion-header:hover {
+                background: #e9ecef;
+            }
+
+            .accordion-header.active {
+                background: #667eea;
+                color: white;
+            }
+
+            .accordion-content {
+                padding: 20px;
+                display: none;
+            }
+
+            .accordion-content.active {
+                display: block;
+            }
+
+            .accordion-icon {
+                transition: transform 0.3s ease;
+            }
+
+            .accordion-header.active .accordion-icon {
+                transform: rotate(180deg);
+            }
+
+            .desktop-buttons {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            /* Mobile Navigation Styles */
+            .mobile-nav {
+                display: none;
+                background: white;
+                border-radius: 8px;
+                margin-bottom: 2rem;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .mobile-nav-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 20px;
+                border-bottom: 1px solid #e1e8ed;
+            }
+
+            .mobile-nav-header h2 {
+                margin: 0;
+                color: #2c3e50;
+                font-size: 1.2rem;
+            }
+
+            .mobile-menu-toggle {
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 8px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+
+            .mobile-nav-dropdown {
+                border-top: 1px solid #e1e8ed;
+                background: #f8f9fa;
+            }
+
+            .mobile-nav-item {
+                display: block;
+                width: 100%;
+                padding: 15px 20px;
+                background: none;
+                border: none;
+                border-bottom: 1px solid #e1e8ed;
+                text-align: left;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+                font-size: 16px;
+                color: #333;
+            }
+
+            .mobile-nav-item:hover {
+                background: #e9ecef;
+            }
+
+            .mobile-nav-item.active {
+                background: #667eea;
+                color: white;
+            }
+
+            .mobile-nav-item:last-child {
+                border-bottom: none;
+            }
+
+            /* Desktop Navigation */
+            .desktop-nav {
+                display: flex;
+            }
+
+            /* Mobile responsive styles */
+            @media (max-width: 768px) {
+                .desktop-nav {
+                    display: none !important;
+                }
+
+                .mobile-nav {
+                    display: block !important;
+                }
+
+                .desktop-buttons {
+                    display: none !important;
+                }
+
+                .mobile-action-dropdown {
+                    display: block !important;
+                }
+
+                .grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .btn-primary,
+                .btn-secondary {
+                    width: 100%;
+                    margin-bottom: 10px;
+                }
+            }
+
+            /* Desktop styles */
+            @media (min-width: 769px) {
+                .mobile-nav {
+                    display: none !important;
+                }
+
+                .desktop-nav {
+                    display: flex !important;
+                }
+
+                .mobile-action-dropdown {
+                    display: none !important;
+                }
+
+                .desktop-buttons {
+                    display: flex !important;
+                }
+            }
+            @media (max-width: 768px) {
+                .container {
+                    padding: 10px;
+                }
+
+                .nav-tabs {
+                    flex-direction: column;
+                }
+
+                .nav-tab {
+                    margin-bottom: 5px;
+                }
+
+                h1 {
+                    font-size: 2rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="container">
+                <h1>ParentPal</h1>
+            </div>
+        </header>
+
         <div class="container">
-            <h1>ParentPal</h1>
-        </div>
-    </header>
+            <!-- Desktop Navigation -->
+            <nav class="nav-tabs desktop-nav">
+                <button class="nav-tab active" onclick="showTab('dashboard')">
+                    Dashboard
+                </button>
+                <button class="nav-tab" onclick="showTab('children')">
+                    Children
+                </button>
+                <button class="nav-tab" onclick="showTab('events')">
+                    Events
+                </button>
+                <button class="nav-tab" onclick="showTab('gmail')">
+                    Gmail Integration
+                </button>
+                <button class="nav-tab" onclick="showTab('settings')">
+                    Settings
+                </button>
+            </nav>
 
-    <div class="container">
-        <!-- Desktop Navigation -->
-        <nav class="nav-tabs desktop-nav">
-            <button class="nav-tab active" onclick="showTab('dashboard')">Dashboard</button>
-            <button class="nav-tab" onclick="showTab('children')">Children</button>
-            <button class="nav-tab" onclick="showTab('events')">Events</button>
-            <button class="nav-tab" onclick="showTab('gmail')">Gmail Integration</button>
-            <button class="nav-tab" onclick="showTab('settings')">Settings</button>
-        </nav>
-
-        <!-- Mobile Navigation -->
-        <div class="mobile-nav">
-            <div class="mobile-nav-header">
-                <h2 id="current-page-title">Dashboard</h2>
-                <button class="mobile-menu-toggle" 
-                        onclick="toggleMobileMenu()" 
-                        aria-expanded="false" 
-                        aria-label="Toggle navigation menu">☰</button>
+            <!-- Mobile Navigation -->
+            <div class="mobile-nav">
+                <div class="mobile-nav-header">
+                    <h2 id="current-page-title">Dashboard</h2>
+                    <button
+                        class="mobile-menu-toggle"
+                        onclick="toggleMobileMenu()"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation menu"
+                    >
+                        ☰
+                    </button>
+                </div>
+                <div
+                    class="mobile-nav-dropdown"
+                    id="mobile-nav-dropdown"
+                    style="display: none"
+                >
+                    <button
+                        class="mobile-nav-item active"
+                        onclick="selectMobileTab('dashboard', 'Dashboard')"
+                    >
+                        Dashboard
+                    </button>
+                    <button
+                        class="mobile-nav-item"
+                        onclick="selectMobileTab('children', 'Children')"
+                    >
+                        Children
+                    </button>
+                    <button
+                        class="mobile-nav-item"
+                        onclick="selectMobileTab('events', 'Events')"
+                    >
+                        Events
+                    </button>
+                    <button
+                        class="mobile-nav-item"
+                        onclick="selectMobileTab('gmail', 'Gmail Integration')"
+                    >
+                        Gmail Integration
+                    </button>
+                    <button
+                        class="mobile-nav-item"
+                        onclick="selectMobileTab('settings', 'Settings')"
+                    >
+                        Settings
+                    </button>
+                </div>
             </div>
-            <div class="mobile-nav-dropdown" id="mobile-nav-dropdown" style="display: none;">
-                <button class="mobile-nav-item active" onclick="selectMobileTab('dashboard', 'Dashboard')">Dashboard</button>
-                <button class="mobile-nav-item" onclick="selectMobileTab('children', 'Children')">Children</button>
-                <button class="mobile-nav-item" onclick="selectMobileTab('events', 'Events')">Events</button>
-                <button class="mobile-nav-item" onclick="selectMobileTab('gmail', 'Gmail Integration')">Gmail Integration</button>
-                <button class="mobile-nav-item" onclick="selectMobileTab('settings', 'Settings')">Settings</button>
-            </div>
-        </div></nav>
 
-        <!-- Dashboard Tab -->
-        <div id="dashboard" class="tab-content active">
-            <div class="grid">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <div class="grid">
+                    <div class="card">
+                        <h3>📅 Today's Events</h3>
+                        <div id="todayEvents">
+                            <div class="loading">Loading today's events...</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>📊 System Status</h3>
+                        <div id="dashboardStatus">
+                            <div class="loading">Checking system status...</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
-                    <h3>📅 Today's Events</h3>
-                    <div id="todayEvents">
-                        <div class="loading">Loading today's events...</div>
+                    <h3>🎯 Quick Actions</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                        <button
+                            onclick="showTab('children')"
+                            class="btn-secondary"
+                        >
+                            Add Child
+                        </button>
+                        <button
+                            onclick="showTab('events')"
+                            class="btn-secondary"
+                        >
+                            Add Event
+                        </button>
+                        <button onclick="connectGmail()" class="btn-success">
+                            Connect Gmail
+                        </button>
+                        <button
+                            onclick="syncGmail()"
+                            class="btn-secondary"
+                            disabled
+                        >
+                            Sync Emails (Connect Gmail First)
+                        </button>
                     </div>
                 </div>
+            </div>
 
+            <!-- Children Tab -->
+            <div id="children" class="tab-content">
                 <div class="card">
-                    <h3>📊 System Status</h3>
-                    <div id="dashboardStatus">
-                        <div class="loading">Checking system status...</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>🎯 Quick Actions</h3>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button onclick="showTab('children')" class="btn-secondary">Add Child</button>
-                    <button onclick="showTab('events')" class="btn-secondary">Add Event</button>
-                    <button onclick="connectGmail()" class="btn-success">Connect Gmail</button>
-                    <button onclick="syncGmail()" class="btn-secondary" disabled>Sync Emails (Connect Gmail First)</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Children Tab -->
-        <div id="children" class="tab-content">
-            <div class="card">
-                <h3>👨‍👩‍👧‍👦 Add New Child</h3>
-                <form onsubmit="addChild(event)">
-                    <div class="form-group">
-                        <label for="childName">Child's Name:</label>
-                        <input type="text" id="childName" name="name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="childGrade">Grade:</label>
-                        <input type="text" id="childGrade" name="grade" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="childSchool">School:</label>
-                        <input type="text" id="childSchool" name="school" required>
-                    </div>
-                    <button type="submit">Add Child</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h3>📋 Your Children</h3>
-                <div id="childrenList">
-                    <div class="loading">Loading children...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Events Tab -->
-        <div id="events" class="tab-content">
-            <div class="card">
-                <h3>📅 Add New Event</h3>
-                <form onsubmit="addEvent(event)">
-                    <div class="form-group">
-                        <label for="eventTitle">Event Title:</label>
-                        <input type="text" id="eventTitle" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventDate">Date:</label>
-                        <input type="date" id="eventDate" name="eventDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventTime">Time:</label>
-                        <input type="time" id="eventTime" name="eventTime">
-                    </div>
-                    <div class="form-group">
-                        <label for="eventChild">Child:</label>
-                        <select id="eventChild" name="childId">
-                            <option value="">Select a child</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventDescription">Description:</label>
-                        <textarea id="eventDescription" name="description" rows="3"></textarea>
-                    </div>
-                    <button type="submit">Add Event</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h3>📋 Upcoming Events</h3>
-                <div id="eventsList">
-                    <div class="loading">Loading events...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Gmail Integration Tab -->
-        <div id="gmail" class="tab-content">
-            <!-- Gmail Connection Status -->
-            <div class="card" id="gmail-connection">
-                <h3>📧 Gmail Integration</h3>
-                <div id="gmailStatus">
-                    <div class="loading">Checking Gmail connection...</div>
-                </div>
-
-                <!-- Desktop Buttons -->
-                <div class="desktop-buttons" style="margin-top: 20px;">
-                    <button onclick="connectGmail()" class="btn-success">Connect Gmail</button>
-                    <button onclick="showGmailSection('emails')" class="btn-secondary" disabled>Sync Emails</button>
-                    <button onclick="showGmailSection('settings')" class="btn-secondary">Sync Settings</button>
-                    <button onclick="startMonitoring()" class="btn-secondary">Start Monitoring</button>
-                    <button onclick="debugOAuth()" class="btn-secondary">Debug OAuth</button>
-                </div>
-
-                <!-- Mobile Action Dropdown -->
-                <div class="mobile-action-dropdown">
-                    <label for="mobile-action-select">Gmail Actions:</label>
-                    <select id="mobile-action-select" onchange="handleMobileActionChange(this)" style="width: 100%; padding: 10px; margin-top: 10px;">
-                        <option value="">Select an action...</option>
-                        <option value="emails">Sync Emails</option>
-                        <option value="settings">Sync Settings</option>
-                        <option value="monitoring">Start Monitoring</option>
-                        <option value="debug">Debug OAuth</option>
-                    </select>
-                </div>
-
-                <div id="debugInfo" style="margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px; display: none;">
-                    <h4>OAuth Debug Information</h4>
-                    <pre id="debugOutput"></pre>
-                </div>
-            </div>
-
-            <!-- Email List Section -->
-            <div class="card" id="email-section" style="display: none;">
-                <h3>📬 Synced Emails</h3>
-                <div style="margin-bottom: 15px;">
-                    <button onclick="syncGmail()" class="btn-primary">Sync Emails</button>
-                    <button onclick="hideGmailSection()" class="btn-secondary" style="margin-left: 10px;">Back to Gmail Settings</button>
-                </div>
-                <div id="emailList">
-                    <div class="loading">No emails synced yet. Click "Sync Emails" to get started.</div>
-                </div>
-            </div>
-
-            <!-- Sync Settings Section with Accordion -->
-            <div class="card" id="settings-section" style="display: none;">
-                <h3>⚙️ Sync Settings</h3>
-                <div style="margin-bottom: 15px;">
-                    <button onclick="hideGmailSection()" class="btn-secondary">Back to Gmail Settings</button>
-                </div>
-
-                <!-- Gmail Settings Accordion -->
-                <div class="accordion">
-                    <div class="accordion-header active" onclick="toggleAccordion('gmail-settings-accordion')">
-                        <span>📧 Gmail Settings</span>
-                        <span class="accordion-icon">▼</span>
-                    </div>
-                    <div class="accordion-content active" id="gmail-settings-accordion">
-                        <p style="color: #666; margin-bottom: 15px;">Configure your Gmail connection and basic settings.</p>
-                        <div id="gmailStatusSettings">
-                            <div class="loading">Loading Gmail status...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Email Processing Limits Accordion -->
-                <div class="accordion">
-                    <div class="accordion-header" onclick="toggleAccordion('email-limits-accordion')">
-                        <span>⚙️ Email Processing Limits</span>
-                        <span class="accordion-icon">▼</span>
-                    </div>
-                    <div class="accordion-content" id="email-limits-accordion">
-                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Configure the maximum number of emails to process and the age of emails to consider. This helps reduce processing costs and improves accuracy.</p>
-                        <div style="display: flex; flex-direction: column; gap: 10px; margin: 15px 0;">
-                            <div>
-                                <label for="max-emails">Max Emails to Process:</label>
-                                <input type="number" id="max-emails" placeholder="e.g., 20" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                            </div>
-                            <div>
-                                <label for="email-days">Email Age (Days):</label>
-                                <input type="number" id="email-days" placeholder="e.g., 7" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                            </div>
-                        </div>
-                        <button onclick="saveEmailSettings()" class="btn-primary">Save Email Settings</button>
-                    </div>
-                </div>
-
-                <!-- School Email Domains Accordion -->
-                <div class="accordion">
-                    <div class="accordion-header" onclick="toggleAccordion('school-domains-accordion')">
-                        <span>🏫 School Email Domains</span>
-                        <span class="accordion-icon">▼</span>
-                    </div>
-                    <div class="accordion-content" id="school-domains-accordion">
-                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Add your school's email domains to filter and process only relevant emails. This helps reduce processing costs and improves accuracy.</p>
-                        <div style="display: flex; gap: 10px; margin: 15px 0;">
-                            <input type="text" id="domain-input" placeholder="e.g., hillviewschool.edu" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                            <button onclick="addDomain()" class="btn-primary">Add Domain</button>
-                        </div>
-                        <p style="color: #888; font-size: 12px;">Enter just the domain name (e.g., "school.edu" not "admin@school.edu")</p>
-                        <div style="margin-top: 15px;">
-                            <h5>Configured Domains:</h5>
-                            <div id="domains-container">
-                                <div class="loading">Loading domains...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Processing Statistics Accordion -->
-                <div class="accordion">
-                    <div class="accordion-header" onclick="toggleAccordion('processing-stats-accordion')">
-                        <span>📊 Processing Statistics</span>
-                        <span class="accordion-icon">▼</span>
-                    </div>
-                    <div class="accordion-content" id="processing-stats-accordion">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
-                            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                                <div style="font-size: 24px; font-weight: bold; color: #007bff;" id="emails-processed">0</div>
-                                <div style="font-size: 12px; color: #666;">Emails Processed</div>
-                            </div>
-                            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                                <div style="font-size: 24px; font-weight: bold; color: #28a745;" id="events-extracted">0</div>
-                                <div style="font-size: 12px; color: #666;">Events Extracted</div>
-                            </div>
-                            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                                <div style="font-size: 24px; font-weight: bold; color: #6c757d;" id="last-sync">Never</div>
-                                <div style="font-size: 12px; color: #666;">Last Sync</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>ℹ️ How it works:</h3>
-                <ol style="margin-left: 20px; margin-top: 10px;">
-                    <li>Connect your Gmail account securely</li>
-                    <li>Configure your school's email domains above</li>
-                    <li>We'll scan for school-related emails from those domains</li>
-                    <li>Events are automatically extracted and added to your calendar</li>
-                    <li>You'll get smart notifications based on your parenting schedule</li>
-                </ol>
-            </div>
-        </div>
-
-        <!-- Settings Tab -->
-        <div id="settings" class="tab-content">
-            <div class="grid">
-                <div class="card">
-                    <h3>🔔 Notification Settings</h3>
-                    <form onsubmit="saveNotificationSettings(event)">
+                    <h3>👨‍👩‍👧‍👦 Add New Child</h3>
+                    <form onsubmit="addChild(event)">
                         <div class="form-group">
-                            <label for="notificationEmail">Email for notifications:</label>
-                            <input type="email" id="notificationEmail" name="email">
+                            <label for="childName">Child's Name:</label>
+                            <input
+                                type="text"
+                                id="childName"
+                                name="name"
+                                required
+                            />
                         </div>
                         <div class="form-group">
-                            <label for="notificationPhone">Phone for SMS alerts:</label>
-                            <input type="tel" id="notificationPhone" name="phone">
+                            <label for="childGrade">Grade:</label>
+                            <input
+                                type="text"
+                                id="childGrade"
+                                name="grade"
+                                required
+                            />
                         </div>
                         <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="dailyDigest" name="dailyDigest"> Daily digest emails
-                            </label>
+                            <label for="childSchool">School:</label>
+                            <input
+                                type="text"
+                                id="childSchool"
+                                name="school"
+                                required
+                            />
                         </div>
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="urgentAlerts" name="urgentAlerts"> Urgent SMS alerts
-                            </label>
-                        </div>
-                        <button type="submit">Save Settings</button>
+                        <button type="submit">Add Child</button>
                     </form>
                 </div>
 
                 <div class="card">
-                    <h3>🤖 AI Settings</h3>
-                    <form onsubmit="saveGPTSettings(event)">
+                    <h3>📋 Your Children</h3>
+                    <div id="childrenList">
+                        <div class="loading">Loading children...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events Tab -->
+            <div id="events" class="tab-content">
+                <div class="card">
+                    <h3>📅 Add New Event</h3>
+                    <form onsubmit="addEvent(event)">
                         <div class="form-group">
-                            <label for="gptModel">AI Model:</label>
-                            <select id="gptModel" name="model">
-                                <option value="gpt-4">GPT-4 (Recommended)</option>
-                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <label for="eventTitle">Event Title:</label>
+                            <input
+                                type="text"
+                                id="eventTitle"
+                                name="title"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="eventDate">Date:</label>
+                            <input
+                                type="date"
+                                id="eventDate"
+                                name="eventDate"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="eventTime">Time:</label>
+                            <input
+                                type="time"
+                                id="eventTime"
+                                name="eventTime"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="eventChild">Child:</label>
+                            <select id="eventChild" name="childId">
+                                <option value="">Select a child</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="gptTemperature">Response Style (0.0 = Precise, 1.0 = Creative):</label>
-                            <input type="range" id="gptTemperature" name="temperature" min="0" max="1" step="0.1" value="0.3">
-                            <span id="temperatureValue">0.3</span>
+                            <label for="eventDescription">Description:</label>
+                            <textarea
+                                id="eventDescription"
+                                name="description"
+                                rows="3"
+                            ></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="customInstructions">Custom Instructions:</label>
-                            <textarea id="customInstructions" name="customInstructions" rows="4" placeholder="Add any specific instructions for how the AI should process your emails..."></textarea>
-                        </div>
-                        <button type="submit">Save Settings</button>
+                        <button type="submit">Add Event</button>
                     </form>
+                </div>
+
+                <div class="card">
+                    <h3>📋 Upcoming Events</h3>
+                    <div id="eventsList">
+                        <div class="loading">Loading events...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gmail Integration Tab -->
+            <div id="gmail" class="tab-content">
+                <!-- Gmail Connection Status -->
+                <div class="card" id="gmail-connection">
+                    <h3>📧 Gmail Integration</h3>
+                    <div id="gmailStatus">
+                        <div class="loading">Checking Gmail connection...</div>
+                    </div>
+
+                    <!-- Desktop Buttons -->
+                    <div class="desktop-buttons" style="margin-top: 20px">
+                        <button onclick="connectGmail()" class="btn-success">
+                            Connect Gmail
+                        </button>
+                        <button
+                            onclick="showGmailSection('emails')"
+                            class="btn-secondary"
+                            disabled
+                        >
+                            Sync Emails
+                        </button>
+                        <button
+                            onclick="showGmailSection('settings')"
+                            class="btn-secondary"
+                        >
+                            Sync Settings
+                        </button>
+                        <button
+                            onclick="startMonitoring()"
+                            class="btn-secondary"
+                        >
+                            Start Monitoring
+                        </button>
+                        <button onclick="debugOAuth()" class="btn-secondary">
+                            Debug OAuth
+                        </button>
+                    </div>
+
+                    <!-- Mobile Action Dropdown -->
+                    <div class="mobile-action-dropdown">
+                        <label for="mobile-action-select">Gmail Actions:</label>
+                        <select
+                            id="mobile-action-select"
+                            onchange="handleMobileActionChange(this)"
+                            style="width: 100%; padding: 10px; margin-top: 10px"
+                        >
+                            <option value="">Select an action...</option>
+                            <option value="emails">Sync Emails</option>
+                            <option value="settings">Sync Settings</option>
+                            <option value="monitoring">Start Monitoring</option>
+                            <option value="debug">Debug OAuth</option>
+                        </select>
+                    </div>
+
+                    <div
+                        id="debugInfo"
+                        style="
+                            margin-top: 20px;
+                            padding: 10px;
+                            background-color: #f5f5f5;
+                            border-radius: 5px;
+                            display: none;
+                        "
+                    >
+                        <h4>OAuth Debug Information</h4>
+                        <pre id="debugOutput"></pre>
+                    </div>
+                </div>
+
+                <!-- Email List Section -->
+                <div class="card" id="email-section" style="display: none">
+                    <h3>📬 Synced Emails</h3>
+                    <div style="margin-bottom: 15px">
+                        <button onclick="syncGmail()" class="btn-primary">
+                            Sync Emails
+                        </button>
+                        <button
+                            onclick="hideGmailSection()"
+                            class="btn-secondary"
+                            style="margin-left: 10px"
+                        >
+                            Back to Gmail Settings
+                        </button>
+                    </div>
+                    <div id="emailList">
+                        <div class="loading">
+                            No emails synced yet. Click "Sync Emails" to get
+                            started.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sync Settings Section with Accordion -->
+                <div class="card" id="settings-section" style="display: none">
+                    <h3>⚙️ Sync Settings</h3>
+                    <div style="margin-bottom: 15px">
+                        <button
+                            onclick="hideGmailSection()"
+                            class="btn-secondary"
+                        >
+                            Back to Gmail Settings
+                        </button>
+                    </div>
+
+                    <!-- Gmail Settings Accordion -->
+                    <div class="accordion">
+                        <div
+                            class="accordion-header active"
+                            onclick="toggleAccordion('gmail-settings-accordion')"
+                        >
+                            <span>📧 Gmail Settings</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div
+                            class="accordion-content active"
+                            id="gmail-settings-accordion"
+                        >
+                            <p style="color: #666; margin-bottom: 15px">
+                                Configure your Gmail connection and basic
+                                settings.
+                            </p>
+                            <div id="gmailStatusSettings">
+                                <div class="loading">
+                                    Loading Gmail status...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Processing Limits Accordion -->
+                    <div class="accordion">
+                        <div
+                            class="accordion-header"
+                            onclick="toggleAccordion('email-limits-accordion')"
+                        >
+                            <span>⚙️ Email Processing Limits</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div
+                            class="accordion-content"
+                            id="email-limits-accordion"
+                        >
+                            <p
+                                style="
+                                    color: #666;
+                                    font-size: 14px;
+                                    margin: 5px 0;
+                                "
+                            >
+                                Configure the maximum number of emails to
+                                process and the age of emails to consider. This
+                                helps reduce processing costs and improves
+                                accuracy.
+                            </p>
+                            <div
+                                style="
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 10px;
+                                    margin: 15px 0;
+                                "
+                            >
+                                <div>
+                                    <label for="max-emails"
+                                        >Max Emails to Process:</label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="max-emails"
+                                        placeholder="e.g., 20"
+                                        style="
+                                            width: 100%;
+                                            padding: 8px;
+                                            border: 1px solid #ddd;
+                                            border-radius: 4px;
+                                        "
+                                    />
+                                </div>
+                                <div>
+                                    <label for="email-days"
+                                        >Email Age (Days):</label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="email-days"
+                                        placeholder="e.g., 7"
+                                        style="
+                                            width: 100%;
+                                            padding: 8px;
+                                            border: 1px solid #ddd;
+                                            border-radius: 4px;
+                                        "
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                onclick="saveEmailSettings()"
+                                class="btn-primary"
+                            >
+                                Save Email Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- School Email Domains Accordion -->
+                    <div class="accordion">
+                        <div
+                            class="accordion-header"
+                            onclick="toggleAccordion('school-domains-accordion')"
+                        >
+                            <span>🏫 School Email Domains</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div
+                            class="accordion-content"
+                            id="school-domains-accordion"
+                        >
+                            <p
+                                style="
+                                    color: #666;
+                                    font-size: 14px;
+                                    margin: 5px 0;
+                                "
+                            >
+                                Add your school's email domains to filter and
+                                process only relevant emails. This helps reduce
+                                processing costs and improves accuracy.
+                            </p>
+                            <div
+                                style="display: flex; gap: 10px; margin: 15px 0"
+                            >
+                                <input
+                                    type="text"
+                                    id="domain-input"
+                                    placeholder="e.g., hillviewschool.edu"
+                                    style="
+                                        flex: 1;
+                                        padding: 8px;
+                                        border: 1px solid #ddd;
+                                        border-radius: 4px;
+                                    "
+                                />
+                                <button
+                                    onclick="addDomain()"
+                                    class="btn-primary"
+                                >
+                                    Add Domain
+                                </button>
+                            </div>
+                            <p style="color: #888; font-size: 12px">
+                                Enter just the domain name (e.g., "school.edu"
+                                not "admin@school.edu")
+                            </p>
+                            <div style="margin-top: 15px">
+                                <h5>Configured Domains:</h5>
+                                <div id="domains-container">
+                                    <div class="loading">
+                                        Loading domains...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Statistics Accordion -->
+                    <div class="accordion">
+                        <div
+                            class="accordion-header"
+                            onclick="toggleAccordion('processing-stats-accordion')"
+                        >
+                            <span>📊 Processing Statistics</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div
+                            class="accordion-content"
+                            id="processing-stats-accordion"
+                        >
+                            <div
+                                style="
+                                    display: grid;
+                                    grid-template-columns: repeat(
+                                        auto-fit,
+                                        minmax(150px, 1fr)
+                                    );
+                                    gap: 15px;
+                                    margin-top: 15px;
+                                "
+                            >
+                                <div
+                                    style="
+                                        text-align: center;
+                                        padding: 15px;
+                                        background: #f8f9fa;
+                                        border-radius: 8px;
+                                    "
+                                >
+                                    <div
+                                        style="
+                                            font-size: 24px;
+                                            font-weight: bold;
+                                            color: #007bff;
+                                        "
+                                        id="emails-processed"
+                                    >
+                                        0
+                                    </div>
+                                    <div style="font-size: 12px; color: #666">
+                                        Emails Processed
+                                    </div>
+                                </div>
+                                <div
+                                    style="
+                                        text-align: center;
+                                        padding: 15px;
+                                        background: #f8f9fa;
+                                        border-radius: 8px;
+                                    "
+                                >
+                                    <div
+                                        style="
+                                            font-size: 24px;
+                                            font-weight: bold;
+                                            color: #28a745;
+                                        "
+                                        id="events-extracted"
+                                    >
+                                        0
+                                    </div>
+                                    <div style="font-size: 12px; color: #666">
+                                        Events Extracted
+                                    </div>
+                                </div>
+                                <div
+                                    style="
+                                        text-align: center;
+                                        padding: 15px;
+                                        background: #f8f9fa;
+                                        border-radius: 8px;
+                                    "
+                                >
+                                    <div
+                                        style="
+                                            font-size: 24px;
+                                            font-weight: bold;
+                                            color: #6c757d;
+                                        "
+                                        id="last-sync"
+                                    >
+                                        Never
+                                    </div>
+                                    <div style="font-size: 12px; color: #666">
+                                        Last Sync
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>ℹ️ How it works:</h3>
+                    <ol style="margin-left: 20px; margin-top: 10px">
+                        <li>Connect your Gmail account securely</li>
+                        <li>Configure your school's email domains above</li>
+                        <li>
+                            We'll scan for school-related emails from those
+                            domains
+                        </li>
+                        <li>
+                            Events are automatically extracted and added to your
+                            calendar
+                        </li>
+                        <li>
+                            You'll get smart notifications based on your
+                            parenting schedule
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="grid">
+                    <div class="card">
+                        <h3>🔔 Notification Settings</h3>
+                        <form onsubmit="saveNotificationSettings(event)">
+                            <div class="form-group">
+                                <label for="notificationEmail"
+                                    >Email for notifications:</label
+                                >
+                                <input
+                                    type="email"
+                                    id="notificationEmail"
+                                    name="email"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="notificationPhone"
+                                    >Phone for SMS alerts:</label
+                                >
+                                <input
+                                    type="tel"
+                                    id="notificationPhone"
+                                    name="phone"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="dailyDigest"
+                                        name="dailyDigest"
+                                    />
+                                    Daily digest emails
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        id="urgentAlerts"
+                                        name="urgentAlerts"
+                                    />
+                                    Urgent SMS alerts
+                                </label>
+                            </div>
+                            <button type="submit">Save Settings</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h3>🤖 AI Settings</h3>
+                        <form onsubmit="saveGPTSettings(event)">
+                            <div class="form-group">
+                                <label for="gptModel">AI Model:</label>
+                                <select id="gptModel" name="model">
+                                    <option value="gpt-4">
+                                        GPT-4 (Recommended)
+                                    </option>
+                                    <option value="gpt-3.5-turbo">
+                                        GPT-3.5 Turbo
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="gptTemperature"
+                                    >Response Style (0.0 = Precise, 1.0 =
+                                    Creative):</label
+                                >
+                                <input
+                                    type="range"
+                                    id="gptTemperature"
+                                    name="temperature"
+                                    min="0"
+                                    max="1"
+                                    step="0.1"
+                                    value="0.3"
+                                />
+                                <span id="temperatureValue">0.3</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="customInstructions"
+                                    >Custom Instructions:</label
+                                >
+                                <textarea
+                                    id="customInstructions"
+                                    name="customInstructions"
+                                    rows="4"
+                                    placeholder="Add any specific instructions for how the AI should process your emails..."
+                                ></textarea>
+                            </div>
+                            <button type="submit">Save Settings</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Global state
-        let currentUser = null;
-        let gmailTokens = null;
+        <script>
+            // Global state
+            let currentUser = null;
+            let gmailTokens = null;
 
-        // Define mobile menu functions immediately to prevent "not defined" errors
-        function toggleMobileMenu() {
-            try {
-                const dropdown = document.getElementById('mobile-nav-dropdown');
-                const toggleButton = document.querySelector('.mobile-menu-toggle');
-                
-                if (!dropdown) {
-                    console.error('Mobile dropdown element not found');
-                    return;
+            // Define mobile menu functions immediately to prevent "not defined" errors
+            function toggleMobileMenu() {
+                try {
+                    const dropdown = document.getElementById('mobile-nav-dropdown');
+                    const toggleButton = document.querySelector('.mobile-menu-toggle');
+
+                    if (!dropdown) {
+                        console.error('Mobile dropdown element not found');
+                        return;
+                    }
+
+                    // Check current visibility state more reliably
+                    const isCurrentlyVisible = dropdown.style.display === 'block';
+
+                    // Toggle visibility
+                    if (isCurrentlyVisible) {
+                        dropdown.style.display = 'none';
+                        if (toggleButton) {
+                            toggleButton.textContent = '☰';
+                            toggleButton.setAttribute('aria-expanded', 'false');
+                        }
+                        console.log('Mobile menu closed');
+                    } else {
+                        dropdown.style.display = 'block';
+                        if (toggleButton) {
+                            toggleButton.textContent = '✕';
+                            toggleButton.setAttribute('aria-expanded', 'true');
+                        }
+                        console.log('Mobile menu opened');
+                    }
+                } catch (error) {
+                    console.error('Error toggling mobile menu:', error);
                 }
-                
-                // Check current visibility state more reliably
-                const isCurrentlyVisible = dropdown.style.display === 'block' && 
-                                         dropdown.style.display !== 'none';
-                
-                // Toggle visibility
-                if (isCurrentlyVisible) {
-                    dropdown.style.display = 'none';
+            }
+
+            function selectMobileTab(tabName, displayName) {
+                try {
+                    // Update page title
+                    const pageTitle = document.getElementById('current-page-title');
+                    if (pageTitle) {
+                        pageTitle.textContent = displayName;
+                    } else {
+                        console.warn('Page title element not found');
+                    }
+
+                    // Update active state for mobile nav items
+                    const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+                    mobileNavItems.forEach(item => {
+                        item.classList.remove('active');
+                    });
+
+                    // Find and activate the selected item
+                    const activeItem = document.querySelector(`[onclick*="selectMobileTab('${tabName}'"]`);
+                    if (activeItem) {
+                        activeItem.classList.add('active');
+                    } else {
+                        console.warn(`Mobile nav item for ${tabName} not found`);
+                    }
+
+                    // Close the dropdown menu
+                    const dropdown = document.getElementById('mobile-nav-dropdown');
+                    const toggleButton = document.querySelector('.mobile-menu-toggle');
+
+                    if (dropdown) {
+                        dropdown.style.display = 'none';
+                    }
+
                     if (toggleButton) {
                         toggleButton.textContent = '☰';
                         toggleButton.setAttribute('aria-expanded', 'false');
                     }
-                    console.log('Mobile menu closed');
-                } else {
-                    dropdown.style.display = 'block';
-                    if (toggleButton) {
-                        toggleButton.textContent = '✕';
-                        toggleButton.setAttribute('aria-expanded', 'true');
-                    }
-                    console.log('Mobile menu opened');
+
+                    // Navigate to the selected tab
+                    showTab(tabName);
+
+                    console.log(`Mobile navigation: switched to ${displayName} (${tabName})`);
+                } catch (error) {
+                    console.error('Error in mobile tab selection:', error);
                 }
-            } catch (error) {
-                console.error('Error toggling mobile menu:', error);
             }
-        }
 
-        function selectMobileTab(tabName, displayName) {
-            try {
-                // Update page title
-                const pageTitle = document.getElementById('current-page-title');
-                if (pageTitle) {
-                    pageTitle.textContent = displayName;
-                } else {
-                    console.warn('Page title element not found');
+            // Tab navigation function (needed by mobile menu)
+            function showTab(tabName) {
+                localStorage.setItem('currentTab', tabName);
+
+                const tabs = document.querySelectorAll('.tab-content');
+                tabs.forEach(tab => {
+                    if (tab && tab.classList) {
+                        tab.classList.remove('active');
+                    }
+                });
+
+                const tabButtons = document.querySelectorAll('.nav-tab');
+                tabButtons.forEach(button => {
+                    if (button && button.classList) {
+                        button.classList.remove('active');
+                    }
+                });
+
+                const selectedTab = document.getElementById(tabName);
+                if (selectedTab && selectedTab.classList) {
+                    selectedTab.classList.add('active');
                 }
 
-                // Update active state for mobile nav items
+                const activeButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+                if (activeButton && activeButton.classList) {
+                    activeButton.classList.add('active');
+                }
+
+                updateMobileNavState(tabName);
+
+                // Load tab-specific data
+                if (tabName === 'gmail') {
+                    checkGmailConnection();
+                    hideGmailSection();
+                    loadEmailSettings();
+                } else if (tabName === 'events') {
+                    loadEvents();
+                    loadChildrenOptions();
+                } else if (tabName === 'dashboard') {
+                    loadDashboard();
+                } else if (tabName === 'children') {
+                    loadChildren();
+                }
+            }
+
+            // Placeholder for updateMobileNavState function
+            function updateMobileNavState(tabName) {
+                const tabNameToDisplay = {
+                    'dashboard': 'Dashboard',
+                    'children': 'Children',
+                    'events': 'Events',
+                    'gmail': 'Gmail Integration',
+                    'settings': 'Settings'
+                };
+
+                const pageTitle = document.getElementById('current-page-title');
+                if (pageTitle && tabNameToDisplay[tabName]) {
+                    pageTitle.textContent = tabNameToDisplay[tabName];
+                }
+
                 const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
                 mobileNavItems.forEach(item => {
                     item.classList.remove('active');
                 });
 
-                // Find and activate the selected item
-                const activeItem = document.querySelector(`[onclick*="selectMobileTab('${tabName}'"]`);
-                if (activeItem) {
-                    activeItem.classList.add('active');
-                } else {
-                    console.warn(`Mobile nav item for ${tabName} not found`);
+                const mobileActiveItem = document.querySelector(`[onclick*="selectMobileTab('${tabName}'"]`);
+                if (mobileActiveItem) {
+                    mobileActiveItem.classList.add('active');
                 }
+            }
 
-                // Close the dropdown menu
+            // Make functions globally available immediately
+            window.toggleMobileMenu = toggleMobileMenu;
+            window.selectMobileTab = selectMobileTab;
+            window.showTab = showTab;
+
+            // Ensure mobile menu is properly initialized
+            document.addEventListener('DOMContentLoaded', function() {
                 const dropdown = document.getElementById('mobile-nav-dropdown');
                 const toggleButton = document.querySelector('.mobile-menu-toggle');
-                
+
                 if (dropdown) {
-                    dropdown.style.display = 'none';
+                    dropdown.style.display = 'none'; // Ensure it starts hidden
                 }
-                
+
                 if (toggleButton) {
-                    toggleButton.textContent = '☰';
                     toggleButton.setAttribute('aria-expanded', 'false');
                 }
 
-                // Navigate to the selected tab
-                showTab(tabName);
-                
-                console.log(`Mobile navigation: switched to ${displayName} (${tabName})`);
-            } catch (error) {
-                console.error('Error in mobile tab selection:', error);
-            }
-        }
-
-        // Tab navigation function (needed by mobile menu)
-        function showTab(tabName) {
-            localStorage.setItem('currentTab', tabName);
-
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => {
-                if (tab && tab.classList) {
-                    tab.classList.remove('active');
-                }
+                console.log('Mobile navigation initialized');
             });
 
-            const tabButtons = document.querySelectorAll('.nav-tab');
-            tabButtons.forEach(button => {
-                if (button && button.classList) {
-                    button.classList.remove('active');
-                }
-            });
+            // Tab navigation function (moved to top)
 
-            const selectedTab = document.getElementById(tabName);
-            if (selectedTab && selectedTab.classList) {
-                selectedTab.classList.add('active');
-            }
+            // Mobile navigation functions (moved to top to prevent "not defined" errors)
 
-            const activeButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
-            if (activeButton && activeButton.classList) {
-                activeButton.classList.add('active');
-            }
+            // Update mobile nav when desktop tabs are clicked (moved to top)
 
-            updateMobileNavState(tabName);
-
-            // Load tab-specific data
-            if (tabName === 'gmail') {
-                checkGmailConnection();
-                hideGmailSection();
-                loadEmailSettings();
-            } else if (tabName === 'events') {
-                loadEvents();
-                loadChildrenOptions();
-            } else if (tabName === 'dashboard') {
-                loadDashboard();
-            } else if (tabName === 'children') {
-                loadChildren();
-            }
-        }
-
-        // Placeholder for updateMobileNavState function
-        function updateMobileNavState(tabName) {
-            const tabNameToDisplay = {
-                'dashboard': 'Dashboard',
-                'children': 'Children', 
-                'events': 'Events',
-                'gmail': 'Gmail Integration',
-                'settings': 'Settings'
-            };
-
-            const pageTitle = document.getElementById('current-page-title');
-            if (pageTitle && tabNameToDisplay[tabName]) {
-                pageTitle.textContent = tabNameToDisplay[tabName];
-            }
-
-            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-            mobileNavItems.forEach(item => {
-                item.classList.remove('active');
-            });
-
-            const mobileActiveItem = document.querySelector(`[onclick*="selectMobileTab('${tabName}'"]`);
-            if (mobileActiveItem) {
-                mobileActiveItem.classList.add('active');
-            }
-        }
-
-        // Make functions globally available immediately
-        window.toggleMobileMenu = toggleMobileMenu;
-        window.selectMobileTab = selectMobileTab;
-        window.showTab = showTab;
-        
-        // Ensure mobile menu is properly initialized
-        document.addEventListener('DOMContentLoaded', function() {
-            const dropdown = document.getElementById('mobile-nav-dropdown');
-            const toggleButton = document.querySelector('.mobile-menu-toggle');
-            
-            if (dropdown) {
-                dropdown.style.display = 'none'; // Ensure it starts hidden
-            }
-            
-            if (toggleButton) {
-                toggleButton.setAttribute('aria-expanded', 'false');
-            }
-            
-            console.log('Mobile navigation initialized');
-        });
-
-        // Tab navigation function (moved to top)
-
-        // Mobile navigation functions (moved to top to prevent "not defined" errors)
-
-        // Update mobile nav when desktop tabs are clicked (moved to top)
-
-        // Dashboard functions
-        function loadDashboard() {
-            fetch('/api/health')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const statusElement = document.getElementById('dashboardStatus');
-                    if (statusElement) {
-                        statusElement.innerHTML = `
-                            <div>
-                                <span class="status-indicator status-connected"></span>
-                                Server is running
-                            </div>
-                            <p style="margin-top: 10px; color: #666;">Last updated: ${new Date(data.timestamp).toLocaleString()}</p>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading dashboard:', error);
-                    const statusElement = document.getElementById('dashboardStatus');
-                    if (statusElement) {
-                        statusElement.innerHTML = `
-                            <div>
-                                <span class="status-indicator status-disconnected"></span>
-                                Server connection failed
-                            </div>
-                            <p style="margin-top: 10px; color: #dc3545;">Error: ${error.message}</p>
-                        `;
-                    }
-                });
-
-            loadTodayEvents();
-        }
-
-        function loadTodayEvents() {
-            fetch('/api/events')
-                .then(response => response.json())
-                .then(events => {
-                    const today = new Date().toDateString();
-                    const todayEvents = events.filter(event => {
-                        return new Date(event.eventDate).toDateString() === today;
+            // Dashboard functions
+            function loadDashboard() {
+                fetch('/api/health')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const statusElement = document.getElementById('dashboardStatus');
+                        if (statusElement) {
+                            statusElement.innerHTML = `
+                                <div>
+                                    <span class="status-indicator status-connected"></span>
+                                    Server is running
+                                </div>
+                                <p style="margin-top: 10px; color: #666;">Last updated: ${new Date(data.timestamp).toLocaleString()}</p>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading dashboard:', error);
+                        const statusElement = document.getElementById('dashboardStatus');
+                        if (statusElement) {
+                            statusElement.innerHTML = `
+                                <div>
+                                    <span class="status-indicator status-disconnected"></span>
+                                    Server connection failed
+                                </div>
+                                <p style="margin-top: 10px; color: #dc3545;">Error: ${error.message}</p>
+                            `;
+                        }
                     });
 
-                    const container = document.getElementById('todayEvents');
-                    if (container) {
-                        if (todayEvents.length === 0) {
-                            container.innerHTML = '<p style="color: #666;">No events scheduled for today</p>';
-                        } else {
-                            container.innerHTML = todayEvents.map(event => `
-                                <div class="event-item">
-                                    <div class="event-date">${event.title}</div>
-                                    <div>${event.eventTime ? `Time: ${event.eventTime}` : 'All day'}</div>
-                                    ${event.description ? `<div style="margin-top: 5px; color: #666;">${event.description}</div>` : ''}
-                                </div>
-                            `).join('');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading today events:', error);
-                    const container = document.getElementById('todayEvents');
-                    if (container) {
-                        container.innerHTML = `<div class="error-message">Failed to load events</div>`;
-                    }
-                });
-        }
-
-        // Children management
-        function addChild(event) {
-            event.preventDefault();
-
-            const childData = {
-                name: document.getElementById('childName').value,
-                grade: document.getElementById('childGrade').value,
-                school: document.getElementById('childSchool').value
-            };
-
-            fetch('/api/children', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(childData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('Child added successfully!');
-                event.target.reset();
-                loadChildren();
-                loadChildrenOptions();
-            })
-            .catch(error => {
-                console.error('Error adding child:', error);
-                alert('Error adding child: ' + error.message);
-            });
-        }
-
-        function loadChildren() {
-            fetch('/api/children')
-                .then(response => response.json())
-                .then(children => {
-                    const container = document.getElementById('childrenList');
-                    if (container) {
-                        if (children.length === 0) {
-                            container.innerHTML = '<p style="color: #666;">No children added yet. Add your first child above!</p>';
-                        } else {
-                            container.innerHTML = children.map(child => `
-                                <div class="child-item">
-                                    <h4>${child.name}</h4>
-                                    <p>Grade: ${child.grade} | School: ${child.school}</p>
-                                </div>
-                            `).join('');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading children:', error);
-                    const container = document.getElementById('childrenList');
-                    if (container) {
-                        container.innerHTML = `<div class="error-message">Failed to load children</div>`;
-                    }
-                });
-        }
-
-        function loadChildrenOptions() {
-            fetch('/api/children')
-                .then(response => response.json())
-                .then(children => {
-                    const select = document.getElementById('eventChild');
-                    if (select) {
-                        select.innerHTML = '<option value="">Select a child</option>';
-                        children.forEach(child => {
-                            const option = document.createElement('option');
-                            option.value = child.id;
-                            option.textContent = child.name;
-                            select.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading children options:', error);
-                });
-        }
-
-        // Events management
-        function addEvent(event) {
-            event.preventDefault();
-
-            const eventData = {
-                title: document.getElementById('eventTitle').value,
-                eventDate: document.getElementById('eventDate').value,
-                eventTime: document.getElementById('eventTime').value,
-                childId: document.getElementById('eventChild').value || null,
-                description: document.getElementById('eventDescription').value
-            };
-
-            fetch('/api/events', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(eventData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('Event added successfully!');
-                event.target.reset();
-                loadEvents();
                 loadTodayEvents();
-            })
-            .catch(error => {
-                console.error('Error adding event:', error);
-                alert('Error adding event: ' + error.message);
-            });
-        }
-
-        function loadEvents() {
-            fetch('/api/events')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(events => {
-                    const container = document.getElementById('eventsList');
-                    if (container) {
-                        if (events.length === 0) {
-                            container.innerHTML = '<p style="color: #666;">No events scheduled. Add your first event above!</p>';
-                        } else {
-                            // Sort events by date
-                            events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
-
-                            container.innerHTML = events.map(event => `
-                                <div class="event-item">
-                                    <div class="event-date">${new Date(event.eventDate).toDateString()}</div>
-                                    <h4>${event.title}</h4>
-                                    ${event.eventTime ? `<p>Time: ${event.eventTime}</p>` : ''}
-                                    ${event.description ? `<p style="color: #666;">${event.description}</p>` : ''}
-                                </div>
-                            `).join('');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading events:', error);
-                    const container = document.getElementById('eventsList');
-                    if (container) {
-                        container.innerHTML = `<div class="error-message">Failed to load events: ${error.message}</div>`;
-                    }
-                });
-        }
-
-        // Gmail integration functions
-        function connectGmail() {
-            // Check if Gmail tokens are already stored
-            const tokens = localStorage.getItem('gmailTokens');
-            if (tokens) {
-                alert('Gmail is already connected! You can sync your emails.');
-                return;
             }
 
-            // Open OAuth in new window
-            const authWindow = window.open('/api/auth/google', 'gmail-auth', 'width=500,height=600');
-
-            // Listen for successful connection
-            const messageListener = (event) => {
-                if (event.data === 'gmail-connected') {
-                    // Update Gmail connection status immediately
-                    checkGmailConnection();
-
-                    // Show success alert (simple solution)
-                    alert('Gmail connected successfully! You can now sync your emails.');
-
-                    // Clean up listener
-                    window.removeEventListener('message', messageListener);
-                } else if (event.data === 'gmail-error') {
-                    // Show error alert
-                    alert('Failed to connect Gmail. Please check the popup window for details.');
-
-                    // Clean up listener
-                    window.removeEventListener('message', messageListener);
-                }
-            };
-
-            window.addEventListener('message', messageListener);
-        }
-
-        // Load email list
-        async function loadEmailList() {
-            try {
-                const response = await fetch('/api/emails/1');
-                const emailsData = await response.json();
-
-                console.log('Loaded emails:', emailsData.length, 'emails for user', 1);
-
-                const emailList = document.getElementById('emailList');
-                if (emailsData.length === 0) {
-                    emailList.innerHTML = '<div class="loading">No emails found. Click "Sync Emails" to get started.</div>';
-                    return;
-                }
-
-                let html = '<table style="width: 100%; border-collapse: collapse;">';
-                html += '<thead><tr style="background-color: #f5f5f5; border-bottom: 2px solid #ddd;">';
-                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Data Source</th>';
-                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Sender</th>';
-                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Subject</th>';
-                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Date</th>';
-                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>';
-                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Event</th>';
-                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Actions</th>';
-                html += '</tr></thead><tbody>';
-
-                emailsData.forEach(email => {
-                    const date = new Date(email.receivedAt).toLocaleDateString();
-                    const eventIcon = email.hasEvent ? '📅' : '📄';
-                    const eventTooltip = email.hasEvent ? 'Event extracted' : 'No event found';
-
-                    // Determine data source indicator
-                    const isRealEmail = email.gmailMessageId && email.gmailMessageId.length > 10;
-                    const dataSourceIcon = isRealEmail ? '📡' : '🧪';
-                    const dataSourceText = isRealEmail ? 'Gmail API' : 'Mock Data';
-                    const dataSourceColor = isRealEmail ? '#28a745' : '#ffc107';
-                    const dataSourceTooltip = isRealEmail ? 'Real email from Gmail API' : 'Mock/test data';
-
-                    html += `<tr style="border-bottom: 1px solid #eee;">`;
-                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;" title="${dataSourceTooltip}">`;
-                    html += `<span style="color: ${dataSourceColor}; font-weight: bold;">${dataSourceIcon} ${dataSourceText}</span>`;
-                    html += `</td>`;
-                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">${email.sender}</td>`;
-                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${email.subject}</td>`;
-                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">${date}</td>`;
-                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee;"><span style="color: #28a745;">✓ Synced</span></td>`;
-                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;" title="${eventTooltip}">${eventIcon}</td>`;
-                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">`;
-                    html += `<button onclick="deleteEmail(${email.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">🗑️ Delete</button>`;
-                    html += `</td>`;
-                    html += `</tr>`;
-                });
-
-                html += '</tbody></table>';
-
-                // Enhanced data source verification and debugging
-                console.log('🔍 Analyzing email data sources:', {
-                    totalEmails: emailsData.length,
-                    sampleEmails: emailsData.slice(0, 3).map(email => ({
-                        id: email.id,
-                        subject: email.subject?.substring(0, 30) + '...',
-                        sender: email.sender,
-                        gmailMessageId: email.gmailMessageId,
-                        isTestData: email.gmailMessageId?.startsWith('test_') || email.sender?.includes('example.com'),
-                        createdAt: email.createdAt
-                    }))
-                });
-
-                const realEmails = emailsData.filter(email => {
-                    const isReal = email.gmailMessageId && 
-                                   !email.gmailMessageId.startsWith('test_') &&
-                                   email.sender && 
-                                   !email.sender.includes('example.com') &&
-                                   !email.subject.includes('Test Email') &&
-                                   !email.sender.includes('test@') &&
-                                   !email.sender.includes('mock@');
-
-                    if (!isReal) {
-                        console.log('🧪 Detected mock/test email:', {
-                            subject: email.subject?.substring(0, 30),
-                            sender: email.sender,
-                            gmailMessageId: email.gmailMessageId,
-                            reasons: [
-                                email.gmailMessageId?.startsWith('test_') ? 'test message ID' : null,
-                                email.sender?.includes('example.com') ? 'example.com sender' : null,
-                                email.subject?.includes('Test Email') ? 'test subject' : null,
-                                email.sender?.includes('test@') ? 'test sender' : null,
-                                email.sender?.includes('mock@') ? 'mock sender' : null
-                            ].filter(Boolean)
+            function loadTodayEvents() {
+                fetch('/api/events')
+                    .then(response => response.json())
+                    .then(events => {
+                        const today = new Date().toDateString();
+                        const todayEvents = events.filter(event => {
+                            return new Date(event.eventDate).toDateString() === today;
                         });
-                    }
 
-                    return isReal;
-                });
-
-                const mockEmails = emailsData.length - realEmails.length;
-
-                console.log('📊 Data source analysis complete:', {
-                    realGmailEmails: realEmails.length,
-                    mockTestEmails: mockEmails,
-                    totalEmails: emailsData.length,
-                    percentageReal: emailsData.length > 0 ? Math.round((realEmails.length / emailsData.length) * 100) : 0
-                });
-
-                const statsHtml = `
-                    <div style="margin-top: 15px; padding: 10px; background: ${mockEmails > 0 ? '#fff3cd' : '#d4edda'}; border-radius: 5px; font-size: 14px; border-left: 4px solid ${mockEmails > 0 ? '#ffc107' : '#28a745'};">
-                        <strong>Data Source Analysis:</strong><br>
-                        📡 Real Gmail emails: <strong>${realEmails.length}</strong><br>
-                        🧪 Mock/test emails: <strong>${mockEmails}</strong><br>
-                        📈 Real data percentage: <strong>${emailsData.length > 0 ? Math.round((realEmails.length / emailsData.length) * 100) : 0}%</strong>
-                        ${mockEmails > 0 ? '<br><span style="color: #856404;">⚠️ <strong>Mock data detected - not from real Gmail account</strong></span>' : '<br><span style="color: #155724;">✅ <strong>All data is from real Gmail API</strong></span>'}
-                    </div>
-                `;
-
-                emailList.innerHTML = html + statsHtml;
-
-            } catch (error) {
-                console.error('Error loading emails:', error);
-                document.getElementById('emailList').innerHTML = '<div class="error">Error loading emails</div>';
-            }
-        }
-
-        function toggleSyncSettings() {
-            const settingsDiv = document.getElementById('sync-settings');
-            const isHidden = settingsDiv.style.display === 'none';
-
-            settingsDiv.style.display = isHidden ? 'block' : 'none';
-
-            // Update button text
-            const buttons = document.querySelectorAll('[onclick="toggleSyncSettings()"]');
-            buttons.forEach(button => {
-                button.textContent = isHidden ? 'Hide Settings' : 'Sync Settings';
-            });
-        }
-
-        function viewEmail(emailId) {
-            console.log('Viewing email:', emailId);
-            alert(`Email details for ID: ${emailId}\nThis feature will show full email content in a modal`);
-        }
-
-        async function createTestUser() {
-            try {
-                const response = await fetch('/api/users', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: 'edward.stead@gmail.com',
-                        name: 'Edward Stead',
-                        customEmailAddress: 'edward@parentpal.app',
-                        phoneNumber: '+1234567890'
+                        const container = document.getElementById('todayEvents');
+                        if (container) {
+                            if (todayEvents.length === 0) {
+                                container.innerHTML = '<p style="color: #666;">No events scheduled for today</p>';
+                            } else {
+                                container.innerHTML = todayEvents.map(event => `
+                                    <div class="event-item">
+                                        <div class="event-date">${event.title}</div>
+                                        <div>${event.eventTime ? `Time: ${event.eventTime}` : 'All day'}</div>
+                                        ${event.description ? `<div style="margin-top: 5px; color: #666;">${event.description}</div>` : ''}
+                                    </div>
+                                `).join('');
+                            }
+                        }
                     })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.log('User created:', { error: 'Failed to create user', details: errorText, status: response.status });
-                    return null;
-                }
-
-                const user = await response.json();
-                console.log('User created:', user);
-                return user;
-            } catch (error) {
-                console.error('Error creating user:', error);
-                console.log('User created:', { error: 'Failed to create user' });
-                return null;
-            }
-        }
-
-        async function syncGmail() {
-            const tokens = localStorage.getItem('gmailTokens');
-            if (!tokens) {
-                alert('Please connect Gmail first');
-                return;
+                    .catch(error => {
+                        console.error('Error loading today events:', error);
+                        const container = document.getElementById('todayEvents');
+                        if (container) {
+                            container.innerHTML = `<div class="error-message">Failed to load events</div>`;
+                        }
+                    });
             }
 
-            // Check if domains are configured
-            const domainsResponse = await fetch('/api/users/1/domains');
-            const domainsData = await domainsResponse.json();
-            const domains = domainsData.schoolDomains || [];
+            // Children management
+            function addChild(event) {
+                event.preventDefault();
 
-            // Get email settings from database or localStorage fallback
-            let emailSettings = { maxEmails: 20, emailDays: 7 };
-            try {
-                const settingsResponse = await fetch('/api/users/1/settings');
-                if (settingsResponse.ok) {
-                    const userData = await settingsResponse.json();
-                    emailSettings = userData.emailSettings || emailSettings;
-                    console.log('Using email settings from database:', emailSettings);
-                } else {
-                    throw new Error('Database not available');
-                }
-            } catch (error) {
-                console.log('Falling back to localStorage settings');
-                const savedSettings = localStorage.getItem('emailSettings');
-                emailSettings = savedSettings ? JSON.parse(savedSettings) : emailSettings;
-            }
+                const childData = {
+                    name: document.getElementById('childName').value,
+                    grade: document.getElementById('childGrade').value,
+                    school: document.getElementById('childSchool').value
+                };
 
-            let statusMessage = '🔄 Syncing emails from Gmail API (Real Data)...';
-            statusMessage += ` (Max: ${emailSettings.maxEmails} emails, ${emailSettings.emailDays} days)`;
-
-            if (domains.length > 0) {
-                statusMessage += ` Filtering by domains: ${domains.join(', ')}`;
-            } else {
-                statusMessage += ' Using default school domain patterns';
-            }
-
-            updateStatus(statusMessage);
-            console.log('Syncing emails...');
-
-            // Add visual indicator for real data processing
-            const statusElement = document.getElementById('sync-status');
-            if (statusElement) {
-                statusElement.innerHTML += '<br><small style="color: #28a745;">📡 Fetching real emails from your Gmail account</small>';
-            }
-
-            try {
-                const response = await fetch('/api/gmail/sync/1', {
+                fetch('/api/children', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ tokens: JSON.parse(tokens) })
-                });
-
-                if (!response.ok) {
-                    const errorResult = await response.json();
-                    if (response.status === 401 && errorResult.expired) {
-                        updateStatus('✗ Gmail authentication expired. Please reconnect your Gmail to continue syncing emails.');
-                        return;
-                    } else {
-                        updateStatus(`✗ Error: ${errorResult.error || 'Sync failed'}`);
-                        console.error('Sync error response:', errorResult);
-                        return;
-                    }
-                }
-
-                const result = await response.json();
-                if (result.success) {
-                    let statusMessage = `✓ ${result.message}`;
-
-                    // Add duplicate handling feedback
-                    if (result.duplicates && result.duplicates > 0) {
-                        statusMessage += ` (${result.duplicates} duplicates skipped)`;
-                    }
-
-                    // Emphasize real data source
-                    statusMessage += ' - 📡 Real Gmail data processed';
-
-                    updateStatus(statusMessage);
-                    await loadEmailList();
-
-                    // Update statistics
-                    document.getElementById('emails-processed').textContent = result.processed || 0;
-                    document.getElementById('last-sync').textContent = new Date().toLocaleString();
-
-                    // Show real data confirmation
-                    const emailList = document.getElementById('emailList');
-                    if (emailList && result.processed > 0) {
-                        const realDataBanner = document.createElement('div');
-                        realDataBanner.style.cssText = 'background: #d4edda; border: 1px solid #c3e6cb; padding: 8px; margin: 10px 0; border-radius: 4px; color: #155724; font-size: 14px;';
-                        realDataBanner.innerHTML = '✅ <strong>Real Data:</strong> These emails were fetched from your actual Gmail account via Gmail API';
-                        emailList.insertBefore(realDataBanner, emailList.firstChild);
-
-                        // Remove banner after 10 seconds
-                        setTimeout(() => realDataBanner.remove(), 10000);
-                    }
-                } else {
-                    updateStatus(`✗ Error: ${result.error}`);
-                    console.error('Sync failed:', result);
-                }
-            } catch (error) {
-                console.error('Sync error:', error);
-                updateStatus('✗ Failed to sync emails');
-            }
-        }
-
-        function startMonitoring() {
-            const tokens = localStorage.getItem('gmailTokens');
-            if (!tokens) {
-                alert('Please connect Gmail first');
-                return;
-            }
-
-            fetch('/api/gmail/monitor/1', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ tokens: JSON.parse(tokens), intervalMinutes: 5 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('Gmail monitoring started! Emails will be checked every 5 minutes.');
-            })
-            .catch(error => {
-                console.error('Gmail monitoring error:', error);
-                alert('Failed to start Gmail monitoring: ' + error.message);
-            });
-        }
-
-        function checkGmailConnection() {
-            // Force clear any invalid tokens first
-            const rawTokens = localStorage.getItem('gmailTokens');
-            if (rawTokens === 'null' || rawTokens === '{}' || rawTokens === 'undefined' || rawTokens === null) {
-                localStorage.removeItem('gmailTokens');
-            }
-
-            // Get fresh token value after cleanup
-            const tokens = localStorage.getItem('gmailTokens');
-            const statusElement = document.getElementById('gmailStatus');
-            const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
-            const syncButtons = document.querySelectorAll('button[onclick*="emails"]');
-
-            console.log('Gmail connection check:', { 
-                rawTokens: rawTokens,
-                cleanedTokens: tokens,
-                hasTokens: !!tokens,
-                connectButtons: connectButtons.length, 
-                syncButtons: syncButtons.length 
-            });
-
-            if (statusElement) {
-                // Parse and validate tokens
-                let validTokens = false;
-                try {
-                    if (tokens && tokens !== 'null' && tokens !== '{}' && tokens !== 'undefined') {
-                        const parsedTokens = JSON.parse(tokens);
-                        validTokens = parsedTokens && parsedTokens.access_token && parsedTokens.access_token.length > 0;
-                        console.log('Token validation:', { 
-                            tokensExist: !!parsedTokens, 
-                            hasAccessToken: !!parsedTokens?.access_token,
-                            accessTokenLength: parsedTokens?.access_token?.length,
-                            validTokens 
-                        });
-                    }
-                } catch (e) {
-                    console.error('Error parsing tokens:', e);
-                    validTokens = false;
-                }
-
-                const statusHtml = validTokens 
-                    ? `<div class="alert alert-success">
-                           <span class="status-indicator status-connected"></span>
-                           <strong>Gmail Connected</strong><br>
-                           Your Gmail account is connected and ready to sync school emails.
-                       </div>`
-                    : `<div class="alert alert-info">
-                           <span class="status-indicator status-disconnected"></span>
-                           <strong>Connect Gmail Account</strong><br>
-                           Connect your Gmail to automatically sync school emails and extract events.
-                       </div>`;
-
-                statusElement.innerHTML = statusHtml;
-
-                // Update buttons
-                connectButtons.forEach(btn => {
-                    if (validTokens) {
-                        btn.disabled = true;
-                        btn.textContent = 'Gmail Connected';
-                        btn.style.opacity = '0.6';
-                    } else {
-                        btn.disabled = false;
-                        btn.textContent = 'Connect Gmail';
-                        btn.style.opacity = '1';
-                    }
-                });
-
-                syncButtons.forEach(btn => {
-                    if (validTokens) {
-                        btn.disabled = false;
-                        btn.textContent = 'Sync Emails';
-                        btn.style.opacity = '1';
-                    } else {
-                        btn.disabled = true;
-                        btn.textContent = 'Sync Emails (Connect Gmail First)';
-                        btn.style.opacity = '0.6';
-                    }
+                    body: JSON.stringify(childData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Child added successfully!');
+                    event.target.reset();
+                    loadChildren();
+                    loadChildrenOptions();
+                })
+                .catch(error => {
+                    console.error('Error adding child:', error);
+                    alert('Error adding child: ' + error.message);
                 });
             }
-        }
 
-        function debugOAuth() {
-            const authURL = '/api/auth/google';
-            const debugOutput = document.getElementById('debugOutput');
-            const debugInfo = document.getElementById('debugInfo');
-
-            if (debugOutput && debugInfo) {
-                debugOutput.textContent = `Attempting to connect to: ${authURL}\n\n`;
-                debugOutput.textContent += `localStorage['gmailTokens']: ${localStorage.getItem('gmailTokens')}\n`;
-                debugOutput.textContent += `window.location.href: ${window.location.href}\n`;
-
-                // Show the debug information
-                debugInfo.style.display = 'block';
+            function loadChildren() {
+                fetch('/api/children')
+                    .then(response => response.json())
+                    .then(children => {
+                        const container = document.getElementById('childrenList');
+                        if (container) {
+                            if (children.length === 0) {
+                                container.innerHTML = '<p style="color: #666;">No children added yet. Add your first child above!</p>';
+                            } else {
+                                container.innerHTML = children.map(child => `
+                                    <div class="child-item">
+                                        <h4>${child.name}</h4>
+                                        <p>Grade: ${child.grade} | School: ${child.school}</p>
+                                    </div>
+                                `).join('');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading children:', error);
+                        const container = document.getElementById('childrenList');
+                        if (container) {
+                            container.innerHTML = `<div class="error-message">Failed to load children</div>`;
+                        }
+                    });
             }
-        }
 
-        // Settings functions
-        async function saveNotificationSettings(event) {
-            event.preventDefault();
+            function loadChildrenOptions() {
+                fetch('/api/children')
+                    .then(response => response.json())
+                    .then(children => {
+                        const select = document.getElementById('eventChild');
+                        if (select) {
+                            select.innerHTML = '<option value="">Select a child</option>';
+                            children.forEach(child => {
+                                const option = document.createElement('option');
+                                option.value = child.id;
+                                option.textContent = child.name;
+                                select.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading children options:', error);
+                    });
+            }
 
-            const settings = {
-                email: document.getElementById('notificationEmail').value,
-                phone: document.getElementById('notificationPhone').value,
-                dailyDigest: document.getElementById('dailyDigest').checked,
-                urgentAlerts: document.getElementById('urgentAlerts').checked
-            };
+            // Events management
+            function addEvent(event) {
+                event.preventDefault();
 
-            try {
-                const response = await fetch('/api/users/1/settings', {
+                const eventData = {
+                    title: document.getElementById('eventTitle').value,
+                    eventDate: document.getElementById('eventDate').value,
+                    eventTime: document.getElementById('eventTime').value,
+                    childId: document.getElementById('eventChild').value || null,
+                    description: document.getElementById('eventDescription').value
+                };
+
+                fetch('/api/events', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ notificationSettings: settings })
+                    body: JSON.stringify(eventData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Event added successfully!');
+                    event.target.reset();
+                    loadEvents();
+                    loadTodayEvents();
+                })
+                .catch(error => {
+                    console.error('Error adding event:', error);
+                    alert('Error adding event: ' + error.message);
+                });
+            }
+
+            function loadEvents() {
+                fetch('/api/events')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(events => {
+                        const container = document.getElementById('eventsList');
+                        if (container) {
+                            if (events.length === 0) {
+                                container.innerHTML = '<p style="color: #666;">No events scheduled. Add your first event above!</p>';
+                            } else {
+                                // Sort events by date
+                                events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+
+                                container.innerHTML = events.map(event => `
+                                    <div class="event-item">
+                                        <div class="event-date">${new Date(event.eventDate).toDateString()}</div>
+                                        <h4>${event.title}</h4>
+                                        ${event.eventTime ? `<p>Time: ${event.eventTime}</p>` : ''}
+                                        ${event.description ? `<p style="color: #666;">${event.description}</p>` : ''}
+                                    </div>
+                                `).join('');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading events:', error);
+                        const container = document.getElementById('eventsList');
+                        if (container) {
+                            container.innerHTML = `<div class="error-message">Failed to load events: ${error.message}</div>`;
+                        }
+                    });
+            }
+
+            // Gmail integration functions
+            function connectGmail() {
+                // Check if Gmail tokens are already stored
+                const tokens = localStorage.getItem('gmailTokens');
+                if (tokens) {
+                    alert('Gmail is already connected! You can sync your emails.');
+                    return;
+                }
+
+                // Open OAuth in new window
+                const authWindow = window.open('/api/auth/google', 'gmail-auth', 'width=500,height=600');
+
+                // Listen for successful connection
+                const messageListener = (event) => {
+                    if (event.data === 'gmail-connected') {
+                        // Update Gmail connection status immediately
+                        checkGmailConnection();
+
+                        // Show success alert (simple solution)
+                        alert('Gmail connected successfully! You can now sync your emails.');
+
+                        // Clean up listener
+                        window.removeEventListener('message', messageListener);
+                    } else if (event.data === 'gmail-error') {
+                        // Show error alert
+                        alert('Failed to connect Gmail. Please check the popup window for details.');
+
+                        // Clean up listener
+                        window.removeEventListener('message', messageListener);
+                    }
+                };
+
+                window.addEventListener('message', messageListener);
+            }
+
+            // Load email list
+            async function loadEmailList() {
+                try {
+                    const response = await fetch('/api/emails/1');
+                    const emailsData = await response.json();
+
+                    console.log('Loaded emails:', emailsData.length, 'emails for user', 1);
+
+                    const emailList = document.getElementById('emailList');
+                    if (emailsData.length === 0) {
+                        emailList.innerHTML = '<div class="loading">No emails found. Click "Sync Emails" to get started.</div>';
+                        return;
+                    }
+
+                    let html = '<table style="width: 100%; border-collapse: collapse;">';
+                    html += '<thead><tr style="background-color: #f5f5f5; border-bottom: 2px solid #ddd;">';
+                    html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Data Source</th>';
+                    html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Sender</th>';
+                    html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Subject</th>';
+                    html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Date</th>';
+                    html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>';
+                    html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Event</th>';
+                    html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Actions</th>';
+                    html += '</tr></thead><tbody>';
+
+                    emailsData.forEach(email => {
+                        const date = new Date(email.receivedAt).toLocaleDateString();
+                        const eventIcon = email.hasEvent ? '📅' : '📄';
+                        const eventTooltip = email.hasEvent ? 'Event extracted' : 'No event found';
+
+                        // Determine data source indicator
+                        const isRealEmail = email.gmailMessageId && email.gmailMessageId.length > 10;
+                        const dataSourceIcon = isRealEmail ? '📡' : '🧪';
+                        const dataSourceText = isRealEmail ? 'Gmail API' : 'Mock Data';
+                        const dataSourceColor = isRealEmail ? '#28a745' : '#ffc107';
+                        const dataSourceTooltip = isRealEmail ? 'Real email from Gmail API' : 'Mock/test data';
+
+                        html += `<tr style="border-bottom: 1px solid #eee;">`;
+                        html += `<td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;" title="${dataSourceTooltip}">`;
+                        html += `<span style="color: ${dataSourceColor}; font-weight: bold;">${dataSourceIcon} ${dataSourceText}</span>`;
+                        html += `</td>`;
+                        html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">${email.sender}</td>`;
+                        html += `<td style="padding: 12px; border-bottom: 1px solid #eee; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${email.subject}</td>`;
+                        html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">${date}</td>`;
+                        html += `<td style="padding: 12px; border-bottom: 1px solid #eee;"><span style="color: #28a745;">✓ Synced</span></td>`;
+                        html += `<td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;" title="${eventTooltip}">${eventIcon}</td>`;
+                        html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">`;
+                        html += `<button onclick="deleteEmail(${email.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">🗑️ Delete</button>`;
+                        html += `</td>`;
+                        html += `</tr>`;
+                    });
+
+                    html += '</tbody></table>';
+
+                    // Enhanced data source verification and debugging
+                    console.log('🔍 Analyzing email data sources:', {
+                        totalEmails: emailsData.length,
+                        sampleEmails: emailsData.slice(0, 3).map(email => ({
+                            id: email.id,
+                            subject: email.subject?.substring(0, 30) + '...',
+                            sender: email.sender,
+                            gmailMessageId: email.gmailMessageId,
+                            isTestData: email.gmailMessageId?.startsWith('test_') || email.sender?.includes('example.com'),
+                            createdAt: email.createdAt
+                        }))
+                    });
+
+                    const realEmails = emailsData.filter(email => {
+                        const isReal = email.gmailMessageId &&
+                                       !email.gmailMessageId.startsWith('test_') &&
+                                       email.sender &&
+                                       !email.sender.includes('example.com') &&
+                                       !email.subject.includes('Test Email') &&
+                                       !email.sender.includes('test@') &&
+                                       !email.sender.includes('mock@');
+
+                        if (!isReal) {
+                            console.log('🧪 Detected mock/test email:', {
+                                subject: email.subject?.substring(0, 30),
+                                sender: email.sender,
+                                gmailMessageId: email.gmailMessageId,
+                                reasons: [
+                                    email.gmailMessageId?.startsWith('test_') ? 'test message ID' : null,
+                                    email.sender?.includes('example.com') ? 'example.com sender' : null,
+                                    email.subject?.includes('Test Email') ? 'test subject' : null,
+                                    email.sender?.includes('test@') ? 'test sender' : null,
+                                    email.sender?.includes('mock@') ? 'mock sender' : null
+                                ].filter(Boolean)
+                            });
+                        }
+
+                        return isReal;
+                    });
+
+                    const mockEmails = emailsData.length - realEmails.length;
+
+                    console.log('📊 Data source analysis complete:', {
+                        realGmailEmails: realEmails.length,
+                        mockTestEmails: mockEmails,
+                        totalEmails: emailsData.length,
+                        percentageReal: emailsData.length > 0 ? Math.round((realEmails.length / emailsData.length) * 100) : 0
+                    });
+
+                    const statsHtml = `
+                        <div style="margin-top: 15px; padding: 10px; background: ${mockEmails > 0 ? '#fff3cd' : '#d4edda'}; border-radius: 5px; font-size: 14px; border-left: 4px solid ${mockEmails > 0 ? '#ffc107' : '#28a745'};">
+                            <strong>Data Source Analysis:</strong><br>
+                            📡 Real Gmail emails: <strong>${realEmails.length}</strong><br>
+                            🧪 Mock/test emails: <strong>${mockEmails}</strong><br>
+                            📈 Real data percentage: <strong>${emailsData.length > 0 ? Math.round((realEmails.length / emailsData.length) * 100) : 0}%</strong>
+                            ${mockEmails > 0 ? '<br><span style="color: #856404;">⚠️ <strong>Mock data detected - not from real Gmail account</strong></span>' : '<br><span style="color: #155724;">✅ <strong>All data is from real Gmail API</strong></span>'}
+                        </div>
+                    `;
+
+                    emailList.innerHTML = html + statsHtml;
+
+                } catch (error) {
+                    console.error('Error loading emails:', error);
+                    document.getElementById('emailList').innerHTML = '<div class="error">Error loading emails</div>';
+                }
+            }
+
+            function toggleSyncSettings() {
+                const settingsDiv = document.getElementById('sync-settings');
+                const isHidden = settingsDiv.style.display === 'none';
+
+                settingsDiv.style.display = isHidden ? 'block' : 'none';
+
+                // Update button text
+                const buttons = document.querySelectorAll('[onclick="toggleSyncSettings()"]');
+                buttons.forEach(button => {
+                    button.textContent = isHidden ? 'Hide Settings' : 'Sync Settings';
+                });
+            }
+
+            function viewEmail(emailId) {
+                console.log('Viewing email:', emailId);
+                alert(`Email details for ID: ${emailId}\nThis feature will show full email content in a modal`);
+            }
+
+            async function createTestUser() {
+                try {
+                    const response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: 'edward.stead@gmail.com',
+                            name: 'Edward Stead',
+                            customEmailAddress: 'edward@parentpal.app',
+                            phoneNumber: '+1234567890'
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.log('User created:', { error: 'Failed to create user', details: errorText, status: response.status });
+                        return null;
+                    }
+
+                    const user = await response.json();
+                    console.log('User created:', user);
+                    return user;
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                    console.log('User created:', { error: 'Failed to create user' });
+                    return null;
+                }
+            }
+
+            async function syncGmail() {
+                const tokens = localStorage.getItem('gmailTokens');
+                if (!tokens) {
+                    alert('Please connect Gmail first');
+                    return;
+                }
+
+                // Check if domains are configured
+                const domainsResponse = await fetch('/api/users/1/domains');
+                const domainsData = await domainsResponse.json();
+                const domains = domainsData.schoolDomains || [];
+
+                // Get email settings from database or localStorage fallback
+                let emailSettings = { maxEmails: 20, emailDays: 7 };
+                try {
+                    const settingsResponse = await fetch('/api/users/1/settings');
+                    if (settingsResponse.ok) {
+                        const userData = await settingsResponse.json();
+                        emailSettings = userData.emailSettings || emailSettings;
+                        console.log('Using email settings from database:', emailSettings);
+                    } else {
+                        throw new Error('Database not available');
+                    }
+                } catch (error) {
+                    console.log('Falling back to localStorage settings');
+                    const savedSettings = localStorage.getItem('emailSettings');
+                    emailSettings = savedSettings ? JSON.parse(savedSettings) : emailSettings;
+                }
+
+                let statusMessage = '🔄 Syncing emails from Gmail API (Real Data)...';
+                statusMessage += ` (Max: ${emailSettings.maxEmails} emails, ${emailSettings.emailDays} days)`;
+
+                if (domains.length > 0) {
+                    statusMessage += ` Filtering by domains: ${domains.join(', ')}`;
+                } else {
+                    statusMessage += ' Using default school domain patterns';
+                }
+
+                updateStatus(statusMessage);
+                console.log('Syncing emails...');
+
+                // Add visual indicator for real data processing
+                const statusElement = document.getElementById('sync-status');
+                if (statusElement) {
+                    statusElement.innerHTML += '<br><small style="color: #28a745;">📡 Fetching real emails from your Gmail account</small>';
+                }
+
+                try {
+                    const response = await fetch('/api/gmail/sync/1', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ tokens: JSON.parse(tokens) })
+                    });
+
+                    if (!response.ok) {
+                        const errorResult = await response.json();
+                        if (response.status === 401 && errorResult.expired) {
+                            updateStatus('✗ Gmail authentication expired. Please reconnect your Gmail to continue syncing emails.');
+                            return;
+                        } else {
+                            updateStatus(`✗ Error: ${errorResult.error || 'Sync failed'}`);
+                            console.error('Sync error response:', errorResult);
+                            return;
+                        }
+                    }
+
+                    const result = await response.json();
+                    if (result.success) {
+                        let statusMessage = `✓ ${result.message}`;
+
+                        // Add duplicate handling feedback
+                        if (result.duplicates && result.duplicates > 0) {
+                            statusMessage += ` (${result.duplicates} duplicates skipped)`;
+                        }
+
+                        // Emphasize real data source
+                        statusMessage += ' - 📡 Real Gmail data processed';
+
+                        updateStatus(statusMessage);
+                        await loadEmailList();
+
+                        // Update statistics
+                        document.getElementById('emails-processed').textContent = result.processed || 0;
+                        document.getElementById('last-sync').textContent = new Date().toLocaleString();
+
+                        // Show real data confirmation
+                        const emailList = document.getElementById('emailList');
+                        if (emailList && result.processed > 0) {
+                            const realDataBanner = document.createElement('div');
+                            realDataBanner.style.cssText = 'background: #d4edda; border: 1px solid #c3e6cb; padding: 8px; margin: 10px 0; border-radius: 4px; color: #155724; font-size: 14px;';
+                            realDataBanner.innerHTML = '✅ <strong>Real Data:</strong> These emails were fetched from your actual Gmail account via Gmail API';
+                            emailList.insertBefore(realDataBanner, emailList.firstChild);
+
+                            // Remove banner after 10 seconds
+                            setTimeout(() => realDataBanner.remove(), 10000);
+                        }
+                    } else {
+                        updateStatus(`✗ Error: ${result.error}`);
+                        console.error('Sync failed:', result);
+                    }
+                } catch (error) {
+                    console.error('Sync error:', error);
+                    updateStatus('✗ Failed to sync emails');
+                }
+            }
+
+            function startMonitoring() {
+                const tokens = localStorage.getItem('gmailTokens');
+                if (!tokens) {
+                    alert('Please connect Gmail first');
+                    return;
+                }
+
+                fetch('/api/gmail/monitor/1', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tokens: JSON.parse(tokens), intervalMinutes: 5 })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Gmail monitoring started! Emails will be checked every 5 minutes.');
+                })
+                .catch(error => {
+                    console.error('Gmail monitoring error:', error);
+                    alert('Failed to start Gmail monitoring: ' + error.message);
+                });
+            }
+
+            function checkGmailConnection() {
+                // Force clear any invalid tokens first
+                const rawTokens = localStorage.getItem('gmailTokens');
+                if (rawTokens === 'null' || rawTokens === '{}' || rawTokens === 'undefined' || rawTokens === null) {
+                    localStorage.removeItem('gmailTokens');
+                }
+
+                // Get fresh token value after cleanup
+                const tokens = localStorage.getItem('gmailTokens');
+                const statusElement = document.getElementById('gmailStatus');
+                const connectButtons = document.querySelectorAll('button[onclick="connectGmail()"]');
+                const syncButtons = document.querySelectorAll('button[onclick*="emails"]');
+
+                console.log('Gmail connection check:', {
+                    rawTokens: rawTokens,
+                    cleanedTokens: tokens,
+                    hasTokens: !!tokens,
+                    connectButtons: connectButtons.length,
+                    syncButtons: syncButtons.length
                 });
 
-                if (response.ok) {
-                    // Also save to localStorage as backup
+                if (statusElement) {
+                    // Parse and validate tokens
+                    let validTokens = false;
+                    try {
+                        if (tokens && tokens !== 'null' && tokens !== '{}' && tokens !== 'undefined') {
+                            const parsedTokens = JSON.parse(tokens);
+                            validTokens = parsedTokens && parsedTokens.access_token && parsedTokens.access_token.length > 0;
+                            console.log('Token validation:', {
+                                tokensExist: !!parsedTokens,
+                                hasAccessToken: !!parsedTokens?.access_token,
+                                accessTokenLength: parsedTokens?.access_token?.length,
+                                validTokens
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Error parsing tokens:', e);
+                        validTokens = false;
+                    }
+
+                    const statusHtml = validTokens
+                        ? `<div class="alert alert-success">
+                               <span class="status-indicator status-connected"></span>
+                               <strong>Gmail Connected</strong><br>
+                               Your Gmail account is connected and ready to sync school emails.
+                           </div>`
+                        : `<div class="alert alert-info">
+                               <span class="status-indicator status-disconnected"></span>
+                               <strong>Connect Gmail Account</strong><br>
+                               Connect your Gmail to automatically sync school emails and extract events.
+                           </div>`;
+
+                    statusElement.innerHTML = statusHtml;
+
+                    // Update buttons
+                    connectButtons.forEach(btn => {
+                        if (validTokens) {
+                            btn.disabled = true;
+                            btn.textContent = 'Gmail Connected';
+                            btn.style.opacity = '0.6';
+                        } else {
+                            btn.disabled = false;
+                            btn.textContent = 'Connect Gmail';
+                            btn.style.opacity = '1';
+                        }
+                    });
+
+                    syncButtons.forEach(btn => {
+                        if (validTokens) {
+                            btn.disabled = false;
+                            btn.textContent = 'Sync Emails';
+                            btn.style.opacity = '1';
+                        } else {
+                            btn.disabled = true;
+                            btn.textContent = 'Sync Emails (Connect Gmail First)';
+                            btn.style.opacity = '0.6';
+                        }
+                    });
+                }
+            }
+
+            function debugOAuth() {
+                const authURL = '/api/auth/google';
+                const debugOutput = document.getElementById('debugOutput');
+                const debugInfo = document.getElementById('debugInfo');
+
+                if (debugOutput && debugInfo) {
+                    debugOutput.textContent = `Attempting to connect to: ${authURL}\n\n`;
+                    debugOutput.textContent += `localStorage['gmailTokens']: ${localStorage.getItem('gmailTokens')}\n`;
+                    debugOutput.textContent += `window.location.href: ${window.location.href}\n`;
+
+                    // Show the debug information
+                    debugInfo.style.display = 'block';
+                }
+            }
+
+            // Settings functions
+            async function saveNotificationSettings(event) {
+                event.preventDefault();
+
+                const settings = {
+                    email: document.getElementById('notificationEmail').value,
+                    phone: document.getElementById('notificationPhone').value,
+                    dailyDigest: document.getElementById('dailyDigest').checked,
+                    urgentAlerts: document.getElementById('urgentAlerts').checked
+                };
+
+                try {
+                    const response = await fetch('/api/users/1/settings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ notificationSettings: settings })
+                    });
+
+                    if (response.ok) {
+                        // Also save to localStorage as backup
+                        localStorage.setItem('notificationSettings', JSON.stringify(settings));
+                        alert('Notification settings saved to database!');
+                    } else {
+                        throw new Error('Failed to save to database');
+                    }
+                } catch (error) {
+                    console.error('Error saving notification settings:', error);
+                    // Fallback to localStorage
                     localStorage.setItem('notificationSettings', JSON.stringify(settings));
-                    alert('Notification settings saved to database!');
-                } else {
-                    throw new Error('Failed to save to database');
+                    alert('Settings saved locally (database connection failed)');
                 }
-            } catch (error) {
-                console.error('Error saving notification settings:', error);
+            }
+
+            function saveGPTSettings(event) {
+                event.preventDefault();
+
+                const settings = {
+                    model: document.getElementById('gptModel').value,
+                    temperature: parseFloat(document.getElementById('gptTemperature').value),
+                    customInstructions: document.getElementById('customInstructions').value
+                };
+
+                localStorage.setItem('gptSettings', JSON.stringify(settings));
+                alert('AI settings saved!');
+            }
+
+            function loadSavedSettings() {
+                // Load GPT settings
+                const gptSettings = localStorage.getItem('gptSettings');
+                if (gptSettings) {
+                    const settings = JSON.parse(gptSettings);
+                    const modelSelect = document.getElementById('gptModel');
+                    const tempSlider = document.getElementById('gptTemperature');
+                    const customInstructions = document.getElementById('customInstructions');
+
+                    if (modelSelect) modelSelect.value = settings.model || 'gpt-4';
+                    if (tempSlider) {
+                        tempSlider.value = settings.temperature || 0.3;
+                        document.getElementById('temperatureValue').textContent = tempSlider.value;
+                    }
+                    if (customInstructions) customInstructions.value = settings.customInstructions || '';
+                }
+
+                // Load notification settings from database
+                try {
+                    const response = await fetch('/api/users/1/settings');
+                    if (response.ok) {
+                        const userData = await response.json();
+                        const settings = userData.notificationSettings || {};
+
+                        const emailInput = document.getElementById('notificationEmail');
+                        const phoneInput = document.getElementById('notificationPhone');
+                        const dailyDigest = document.getElementById('dailyDigest');
+                        const urgentAlerts = document.getElementById('urgentAlerts');
+
+                        if (emailInput) emailInput.value = settings.email || '';
+                        if (phoneInput) phoneInput.value = settings.phone || '';
+                        if (dailyDigest) dailyDigest.checked = settings.dailyDigest !== false;
+                        if (urgentAlerts) urgentAlerts.checked = settings.urgentAlerts !== false;
+
+                        console.log('Notification settings loaded from database');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error loading notification settings from database:', error);
+                }
+
                 // Fallback to localStorage
-                localStorage.setItem('notificationSettings', JSON.stringify(settings));
-                alert('Settings saved locally (database connection failed)');
-            }
-        }
-
-        function saveGPTSettings(event) {
-            event.preventDefault();
-
-            const settings = {
-                model: document.getElementById('gptModel').value,
-                temperature: parseFloat(document.getElementById('gptTemperature').value),
-                customInstructions: document.getElementById('customInstructions').value
-            };
-
-            localStorage.setItem('gptSettings', JSON.stringify(settings));
-            alert('AI settings saved!');
-        }
-
-        function loadSavedSettings() {
-            // Load GPT settings
-            const gptSettings = localStorage.getItem('gptSettings');
-            if (gptSettings) {
-                const settings = JSON.parse(gptSettings);
-                const modelSelect = document.getElementById('gptModel');
-                const tempSlider = document.getElementById('gptTemperature');
-                const customInstructions = document.getElementById('customInstructions');
-
-                if (modelSelect) modelSelect.value = settings.model || 'gpt-4';
-                if (tempSlider) {
-                    tempSlider.value = settings.temperature || 0.3;
-                    document.getElementById('temperatureValue').textContent = tempSlider.value;
-                }
-                if (customInstructions) customInstructions.value = settings.customInstructions || '';
-            }
-
-            // Load notification settings from database
-            try {
-                const response = await fetch('/api/users/1/settings');
-                if (response.ok) {
-                    const userData = await response.json();
-                    const settings = userData.notificationSettings || {};
-                    
+                const notificationSettings = localStorage.getItem('notificationSettings');
+                if (notificationSettings) {
+                    const settings = JSON.parse(notificationSettings);
                     const emailInput = document.getElementById('notificationEmail');
                     const phoneInput = document.getElementById('notificationPhone');
                     const dailyDigest = document.getElementById('dailyDigest');
@@ -1689,379 +2087,356 @@
                     if (phoneInput) phoneInput.value = settings.phone || '';
                     if (dailyDigest) dailyDigest.checked = settings.dailyDigest !== false;
                     if (urgentAlerts) urgentAlerts.checked = settings.urgentAlerts !== false;
-                    
-                    console.log('Notification settings loaded from database');
+
+                    console.log('Notification settings loaded from localStorage');
+                }
+            }
+
+            // Temperature slider update
+            document.addEventListener('DOMContentLoaded', function() {
+                const tempSlider = document.getElementById('gptTemperature');
+                const tempValue = document.getElementById('temperatureValue');
+
+                if (tempSlider && tempValue) {
+                    tempSlider.addEventListener('input', function() {
+                        tempValue.textContent = this.value;
+                    });
+                }
+            });
+
+            // Event summary popup function
+            function showEventSummary(emailId) {
+                // Mock event data - replace with real data later
+                const mockEventData = {
+                    1: {
+                        title: "Parent-Teacher Conference",
+                        date: "January 15, 2024 at 3:00 PM",
+                        location: "Room 204",
+                        description: "Quarterly academic review meeting"
+                    },
+                    2: {
+                        title: "Soccer Practice Cancelled",
+                        date: "January 15, 2024 at 4:00 PM",
+                        location: "School Field",
+                        description: "Practice cancelled due to weather"
+                    }
+                };
+
+                const eventData = mockEventData[emailId];
+                if (eventData) {
+                    alert(`Event Summary:\n\nTitle: ${eventData.title}\nDate: ${eventData.date}\nLocation: ${eventData.location}\nDescription: ${eventData.description}`);
+                }
+            }
+
+            // Delete email function
+            function deleteEmail(emailId) {
+                if (confirm('Are you sure you want to remove this email from view?')) {
+                    console.log('Deleting email:', emailId);
+                    // Reload email list to reflect changes
+                    loadEmailList();
+                }
+            }
+
+            // Listen for OAuth completion messages
+            window.addEventListener('message', function(event) {
+                // Handle both old string format and new object format for backward compatibility
+                if (event.data === 'gmail-connected' || (event.data && event.data.type === 'gmail-connected')) {
+                    console.log('Gmail connection successful! Updating UI...');
+
+                    // Store tokens if provided in the new format
+                    if (event.data && event.data.tokens) {
+                        localStorage.setItem('gmailTokens', JSON.stringify(event.data.tokens));
+                        console.log('Tokens stored from OAuth callback:', {
+                            hasTokens: true,
+                            hasAccessToken: !!event.data.tokens.access_token,
+                            hasRefreshToken: !!event.data.tokens.refresh_token
+                        });
+                    }
+
+                    // Update UI immediately
+                    setTimeout(() => {
+                        const storedTokens = localStorage.getItem('gmailTokens');
+                        console.log('Tokens after OAuth completion:', {
+                            hasTokens: !!storedTokens,
+                            firstChars: storedTokens?.substring(0, 50) + '...'
+                        });
+
+                        checkGmailConnection();
+                        alert('Gmail connected successfully! You can now sync your emails.');
+                    }, 100);
+                } else if (event.data === 'gmail-error') {
+                    console.error('Gmail connection failed');
+                    alert('Gmail connection failed. Please try again.');
+                }
+            });
+
+            // Domain management functions
+            async function loadDomains() {
+                const container = document.getElementById('domains-container');
+                if (!container) return;
+
+                try {
+                    const response = await fetch('/api/users/1/domains');
+                    if (response.ok) {
+                        const user = await response.json();
+                        const domains = user.schoolDomains || [];
+
+                        if (domains.length === 0) {
+                            container.innerHTML = '<p style="color: #666; font-style: italic;">No domains configured yet. Add domains above to filter school emails.</p>';
+                        } else {
+                            container.innerHTML = domains.map(domain =>
+                                `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin: 5px 0;">
+                                    <span style="font-family: monospace;">${domain}</span>
+                                    <button onclick="removeDomain('${domain}')" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Remove</button>
+                                </div>`
+                            ).join('');
+                        }
+                    } else {
+                        container.innerHTML = '<p style="color: #dc3545;">Failed to load domains</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading domains:', error);
+                    container.innerHTML = '<p style="color: #dc3545;">Error loading domains</p>';
+                }
+            }
+
+            async function addDomain() {
+                const input = document.getElementById('domain-input');
+                const domain = input.value.trim();
+
+                if (!domain) {
+                    alert('Please enter a domain name');
                     return;
                 }
-            } catch (error) {
-                console.error('Error loading notification settings from database:', error);
-            }
 
-            // Fallback to localStorage
-            const notificationSettings = localStorage.getItem('notificationSettings');
-            if (notificationSettings) {
-                const settings = JSON.parse(notificationSettings);
-                const emailInput = document.getElementById('notificationEmail');
-                const phoneInput = document.getElementById('notificationPhone');
-                const dailyDigest = document.getElementById('dailyDigest');
-                const urgentAlerts = document.getElementById('urgentAlerts');
-
-                if (emailInput) emailInput.value = settings.email || '';
-                if (phoneInput) phoneInput.value = settings.phone || '';
-                if (dailyDigest) dailyDigest.checked = settings.dailyDigest !== false;
-                if (urgentAlerts) urgentAlerts.checked = settings.urgentAlerts !== false;
-                
-                console.log('Notification settings loaded from localStorage');
-            }
-        }
-
-        // Temperature slider update
-        document.addEventListener('DOMContentLoaded', function() {
-            const tempSlider = document.getElementById('gptTemperature');
-            const tempValue = document.getElementById('temperatureValue');
-
-            if (tempSlider && tempValue) {
-                tempSlider.addEventListener('input', function() {
-                    tempValue.textContent = this.value;
-                });
-            }
-        });
-
-        // Event summary popup function
-        function showEventSummary(emailId) {
-            // Mock event data - replace with real data later
-            const mockEventData = {
-                1: {
-                    title: "Parent-Teacher Conference",
-                    date: "January 15, 2024 at 3:00 PM",
-                    location: "Room 204",
-                    description: "Quarterly academic review meeting"
-                },
-                2: {
-                    title: "Soccer Practice Cancelled",
-                    date: "January 15, 2024 at 4:00 PM", 
-                    location: "School Field",
-                    description: "Practice cancelled due to weather"
-                }
-            };
-
-            const eventData = mockEventData[emailId];
-            if (eventData) {
-                alert(`Event Summary:\n\nTitle: ${eventData.title}\nDate: ${eventData.date}\nLocation: ${eventData.location}\nDescription: ${eventData.description}`);
-            }
-        }
-
-        // Delete email function
-        function deleteEmail(emailId) {
-            if (confirm('Are you sure you want to remove this email from view?')) {
-                console.log('Deleting email:', emailId);
-                // Reload email list to reflect changes
-                loadEmailList();
-            }
-        }
-
-        // Listen for OAuth completion messages
-        window.addEventListener('message', function(event) {
-            // Handle both old string format and new object format for backward compatibility
-            if (event.data === 'gmail-connected' || (event.data && event.data.type === 'gmail-connected')) {
-                console.log('Gmail connection successful! Updating UI...');
-
-                // Store tokens if provided in the new format
-                if (event.data && event.data.tokens) {
-                    localStorage.setItem('gmailTokens', JSON.stringify(event.data.tokens));
-                    console.log('Tokens stored from OAuth callback:', { 
-                        hasTokens: true,
-                        hasAccessToken: !!event.data.tokens.access_token,
-                        hasRefreshToken: !!event.data.tokens.refresh_token
-                    });
+                // Basic domain validation
+                if (!domain.includes('.') || domain.includes('@') || domain.includes('http')) {
+                    alert('Please enter a valid domain name (e.g., "school.edu")');
+                    return;
                 }
 
-                // Update UI immediately
-                setTimeout(() => {
-                    const storedTokens = localStorage.getItem('gmailTokens');
-                    console.log('Tokens after OAuth completion:', { 
-                        hasTokens: !!storedTokens,
-                        firstChars: storedTokens?.substring(0, 50) + '...'
+                try {
+                    const response = await fetch('/api/users/1/domains', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ domain })
                     });
 
-                    checkGmailConnection();
-                    alert('Gmail connected successfully! You can now sync your emails.');
-                }, 100);
-            } else if (event.data === 'gmail-error') {
-                console.error('Gmail connection failed');
-                alert('Gmail connection failed. Please try again.');
-            }
-        });
-
-        // Domain management functions
-        async function loadDomains() {
-            const container = document.getElementById('domains-container');
-            if (!container) return;
-
-            try {
-                const response = await fetch('/api/users/1/domains');
-                if (response.ok) {
-                    const user = await response.json();
-                    const domains = user.schoolDomains || [];
-
-                    if (domains.length === 0) {
-                        container.innerHTML = '<p style="color: #666; font-style: italic;">No domains configured yet. Add domains above to filter school emails.</p>';
+                    if (response.ok) {
+                        input.value = '';
+                        loadDomains();
+                        alert('Domain added successfully!');
                     } else {
-                        container.innerHTML = domains.map(domain => 
-                            `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin: 5px 0;">
-                                <span style="font-family: monospace;">${domain}</span>
-                                <button onclick="removeDomain('${domain}')" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Remove</button>
-                            </div>`
-                        ).join('');
+                        const error = await response.text();
+                        alert('Failed to add domain: ' + error);
                     }
-                } else {
-                    container.innerHTML = '<p style="color: #dc3545;">Failed to load domains</p>';
+                } catch (error) {
+                    console.error('Error adding domain:', error);
+                    alert('Error adding domain');
                 }
-            } catch (error) {
-                console.error('Error loading domains:', error);
-                container.innerHTML = '<p style="color: #dc3545;">Error loading domains</p>';
-            }
-        }
-
-        async function addDomain() {
-            const input = document.getElementById('domain-input');
-            const domain = input.value.trim();
-
-            if (!domain) {
-                alert('Please enter a domain name');
-                return;
             }
 
-            // Basic domain validation
-            if (!domain.includes('.') || domain.includes('@') || domain.includes('http')) {
-                alert('Please enter a valid domain name (e.g., "school.edu")');
-                return;
-            }
+            async function removeDomain(domain) {
+                if (!confirm(`Remove domain "${domain}"?`)) return;
 
-            try {
-                const response = await fetch('/api/users/1/domains', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ domain })
-                });
+                try {
+                    const response = await fetch('/api/users/1/domains', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ domain })
+                    });
 
-                if (response.ok) {
-                    input.value = '';
-                    loadDomains();
-                    alert('Domain added successfully!');
-                } else {
-                    const error = await response.text();
-                    alert('Failed to add domain: ' + error);
+                    if (response.ok) {
+                        loadDomains();
+                        alert('Domain removed successfully!');
+                    } else {
+                        const error = await response.text();
+                        alert('Failed to remove domain: ' + error);
+                    }
+                } catch (error) {
+                    console.error('Error removing domain:', error);
+                    alert('Error removing domain');
                 }
-            } catch (error) {
-                console.error('Error adding domain:', error);
-                alert('Error adding domain');
             }
-        }
 
-        async function removeDomain(domain) {
-            if (!confirm(`Remove domain "${domain}"?`)) return;
+            // Load processing statistics
+            async function loadProcessingStats() {
+                try {
+                    const response = await fetch('/api/users/1/stats');
+                    if (response.ok) {
+                        const stats = await response.json();
 
-            try {
-                const response = await fetch('/api/users/1/domains', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ domain })
-                });
+                        const emailsProcessed = document.getElementById('emails-processed');
+                        const eventsExtracted = document.getElementById('events-extracted');
+                        const lastSync = document.getElementById('last-sync');
 
-                if (response.ok) {
-                    loadDomains();
-                    alert('Domain removed successfully!');
-                } else {
-                    const error = await response.text();
-                    alert('Failed to remove domain: ' + error);
+                        if (emailsProcessed) emailsProcessed.textContent = stats.emailsProcessed || 0;
+                        if (eventsExtracted) eventsExtracted.textContent = stats.eventsExtracted || 0;
+                        if (lastSync) lastSync.textContent = stats.lastSync || 'Never';
+                    }
+                } catch (error) {
+                    console.error('Error loading stats:', error);
                 }
-            } catch (error) {
-                console.error('Error removing domain:', error);
-                alert('Error removing domain');
             }
-        }
 
-        // Load processing statistics
-        async function loadProcessingStats() {
-            try {
-                const response = await fetch('/api/users/1/stats');
-                if (response.ok) {
-                    const stats = await response.json();
+            async function saveEmailSettings() {
+                const maxEmails = document.getElementById('max-emails').value;
+                const emailDays = document.getElementById('email-days').value;
 
-                    const emailsProcessed = document.getElementById('emails-processed');
-                    const eventsExtracted = document.getElementById('events-extracted');
-                    const lastSync = document.getElementById('last-sync');
+                const settings = {
+                    maxEmails: parseInt(maxEmails, 10) || 20,
+                    emailDays: parseInt(emailDays, 10) || 7
+                };
 
-                    if (emailsProcessed) emailsProcessed.textContent = stats.emailsProcessed || 0;
-                    if (eventsExtracted) eventsExtracted.textContent = stats.eventsExtracted || 0;
-                    if (lastSync) lastSync.textContent = stats.lastSync || 'Never';
-                }
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
+                try {
+                    const response = await fetch('/api/users/1/settings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ emailSettings: settings })
+                    });
 
-        async function saveEmailSettings() {
-            const maxEmails = document.getElementById('max-emails').value;
-            const emailDays = document.getElementById('email-days').value;
-
-            const settings = {
-                maxEmails: parseInt(maxEmails, 10) || 20,
-                emailDays: parseInt(emailDays, 10) || 7
-            };
-
-            try {
-                const response = await fetch('/api/users/1/settings', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ emailSettings: settings })
-                });
-
-                if (response.ok) {
-                    // Also save to localStorage as backup
+                    if (response.ok) {
+                        // Also save to localStorage as backup
+                        localStorage.setItem('emailSettings', JSON.stringify(settings));
+                        alert('Email settings saved to database!');
+                    } else {
+                        throw new Error('Failed to save to database');
+                    }
+                } catch (error) {
+                    console.error('Error saving email settings:', error);
+                    // Fallback to localStorage
                     localStorage.setItem('emailSettings', JSON.stringify(settings));
-                    alert('Email settings saved to database!');
-                } else {
-                    throw new Error('Failed to save to database');
+                    alert('Settings saved locally (database connection failed)');
                 }
-            } catch (error) {
-                console.error('Error saving email settings:', error);
+            }
+
+            // Gmail section management
+            function showGmailSection(section) {
+                // Hide all sections
+                document.getElementById('gmail-connection').style.display = 'none';
+                document.getElementById('email-section').style.display = 'none';
+                document.getElementById('settings-section').style.display = 'none';
+
+                if (section === 'emails') {
+                    document.getElementById('email-section').style.display = 'block';
+                    loadEmailList();
+                } else if (section === 'settings') {
+                    document.getElementById('settings-section').style.display = 'block';
+                    loadDomains();
+                    loadProcessingStats();
+                    // Copy Gmail status to settings section
+                    const gmailStatus = document.getElementById('gmailStatus').innerHTML;
+                    document.getElementById('gmailStatusSettings').innerHTML = gmailStatus;
+                }
+            }
+
+            function hideGmailSection() {
+                // Show connection section and hide others
+                document.getElementById('gmail-connection').style.display = 'block';
+                document.getElementById('email-section').style.display = 'none';
+                document.getElementById('settings-section').style.display = 'none';
+            }
+
+            // Mobile action dropdown handler
+            function handleMobileActionChange(selectElement) {
+                const selectedValue = selectElement.value;
+
+                if (selectedValue === 'emails') {
+                    showGmailSection('emails');
+                } else if (selectedValue === 'settings') {
+                    showGmailSection('settings');
+                } else if (selectedValue === 'monitoring') {
+                    startMonitoring();
+                } else if (selectedValue === 'debug') {
+                    debugOAuth();
+                }
+
+                // Reset dropdown
+                selectElement.value = '';
+            }
+
+            // Accordion functionality
+            function toggleAccordion(accordionId) {
+                const content = document.getElementById(accordionId);
+                const header = content.previousElementSibling;
+
+                if (content.classList.contains('active')) {
+                    content.classList.remove('active');
+                    header.classList.remove('active');
+                } else {
+                    content.classList.add('active');
+                    header.classList.add('active');
+                }
+            }
+
+            // Load saved email settings into form
+            async function loadEmailSettings() {
+                try {
+                    // Try to load from database first
+                    const response = await fetch('/api/users/1/settings');
+                    if (response.ok) {
+                        const userData = await response.json();
+                        const settings = userData.emailSettings || { maxEmails: 20, emailDays: 7 };
+
+                        const maxEmailsInput = document.getElementById('max-emails');
+                        const emailDaysInput = document.getElementById('email-days');
+
+                        if (maxEmailsInput) maxEmailsInput.value = settings.maxEmails || 20;
+                        if (emailDaysInput) emailDaysInput.value = settings.emailDays || 7;
+
+                        console.log('Email settings loaded from database:', settings);
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error loading email settings from database:', error);
+                }
+
                 // Fallback to localStorage
-                localStorage.setItem('emailSettings', JSON.stringify(settings));
-                alert('Settings saved locally (database connection failed)');
-            }
-        }
-
-        // Gmail section management
-        function showGmailSection(section) {
-            // Hide all sections
-            document.getElementById('gmail-connection').style.display = 'none';
-            document.getElementById('email-section').style.display = 'none';
-            document.getElementById('settings-section').style.display = 'none';
-
-            if (section === 'emails') {
-                document.getElementById('email-section').style.display = 'block';
-                loadEmailList();
-            } else if (section === 'settings') {
-                document.getElementById('settings-section').style.display = 'block';
-                loadDomains();
-                loadProcessingStats();
-                // Copy Gmail status to settings section
-                const gmailStatus = document.getElementById('gmailStatus').innerHTML;
-                document.getElementById('gmailStatusSettings').innerHTML = gmailStatus;
-            }
-        }
-
-        function hideGmailSection() {
-            // Show connection section and hide others
-            document.getElementById('gmail-connection').style.display = 'block';
-            document.getElementById('email-section').style.display = 'none';
-            document.getElementById('settings-section').style.display = 'none';
-        }
-
-        // Mobile action dropdown handler
-        function handleMobileActionChange(selectElement) {
-            const selectedValue = selectElement.value;
-            
-            if (selectedValue === 'emails') {
-                showGmailSection('emails');
-            } else if (selectedValue === 'settings') {
-                showGmailSection('settings');
-            } else if (selectedValue === 'monitoring') {
-                startMonitoring();
-            } else if (selectedValue === 'debug') {
-                debugOAuth();
-            }
-
-            // Reset dropdown
-            selectElement.value = '';
-        }
-
-        // Accordion functionality
-        function toggleAccordion(accordionId) {
-            const content = document.getElementById(accordionId);
-            const header = content.previousElementSibling;
-            
-            if (content.classList.contains('active')) {
-                content.classList.remove('active');
-                header.classList.remove('active');
-            } else {
-                content.classList.add('active');
-                header.classList.add('active');
-            }
-        }
-
-        // Load saved email settings into form
-        async function loadEmailSettings() {
-            try {
-                // Try to load from database first
-                const response = await fetch('/api/users/1/settings');
-                if (response.ok) {
-                    const userData = await response.json();
-                    const settings = userData.emailSettings || { maxEmails: 20, emailDays: 7 };
-                    
+                const savedSettings = localStorage.getItem('emailSettings');
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
                     const maxEmailsInput = document.getElementById('max-emails');
                     const emailDaysInput = document.getElementById('email-days');
-                    
+
                     if (maxEmailsInput) maxEmailsInput.value = settings.maxEmails || 20;
                     if (emailDaysInput) emailDaysInput.value = settings.emailDays || 7;
-                    
-                    console.log('Email settings loaded from database:', settings);
-                    return;
+
+                    console.log('Email settings loaded from localStorage:', settings);
                 }
-            } catch (error) {
-                console.error('Error loading email settings from database:', error);
             }
 
-            // Fallback to localStorage
-            const savedSettings = localStorage.getItem('emailSettings');
-            if (savedSettings) {
-                const settings = JSON.parse(savedSettings);
-                const maxEmailsInput = document.getElementById('max-emails');
-                const emailDaysInput = document.getElementById('email-days');
-                
-                if (maxEmailsInput) maxEmailsInput.value = settings.maxEmails || 20;
-                if (emailDaysInput) emailDaysInput.value = settings.emailDays || 7;
-                
-                console.log('Email settings loaded from localStorage:', settings);
+            // Initialize the app when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM loaded, initializing app...');
+
+                // Only clear invalid cached tokens (not all tokens)
+                const tokens = localStorage.getItem('gmailTokens');
+                if (tokens === 'null' || tokens === '{}' || tokens === 'undefined') {
+                    localStorage.removeItem('gmailTokens');
+                    console.log('Cleared invalid cached tokens');
+                }
+
+                // Show dashboard by default, but preserve current tab if already set
+                const urlParams = new URLSearchParams(window.location.hash.substring(1));
+                const currentTab = urlParams.get('tab') || localStorage.getItem('currentTab') || 'dashboard';
+                showTab(currentTab);
+
+                // Update mobile navigation state
+                updateMobileNavState(currentTab);
+
+                // Check Gmail connection status
+                checkGmailConnection();
+            });
+
+            function updateStatus(message) {
+                console.log(message);
             }
-        }
-
-        // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing app...');
-
-            // Only clear invalid cached tokens (not all tokens)
-            const tokens = localStorage.getItem('gmailTokens');
-            if (tokens === 'null' || tokens === '{}' || tokens === 'undefined') {
-                localStorage.removeItem('gmailTokens');
-                console.log('Cleared invalid cached tokens');
-            }
-
-            // Show dashboard by default, but preserve current tab if already set
-            const urlParams = new URLSearchParams(window.location.hash.substring(1));
-            const currentTab = urlParams.get('tab') || localStorage.getItem('currentTab') || 'dashboard';
-            showTab(currentTab);
-            
-            // Update mobile navigation state
-            updateMobileNavState(currentTab);
-
-            // Check Gmail connection status
-            checkGmailConnection();
-        });
-
-        function updateStatus(message) {
-            console.log(message);
-        }
-
-         
-    </script>
-</body>
+        </script>
+    </body>
 </html>
