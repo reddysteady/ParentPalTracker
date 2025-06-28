@@ -482,7 +482,7 @@
                     <h2 id="current-page-title">Dashboard</h2>
                     <button
                         class="mobile-menu-toggle"
-                        onclick="handleMobileMenuClick()"
+                        onclick="toggleMobileMenu()"
                         aria-expanded="false"
                         aria-label="Toggle navigation menu"
                     >
@@ -1199,21 +1199,7 @@
                 }
             }
             
-            // Create a wrapper function to catch onclick errors
-            window.handleMobileMenuClick = function() {
-                console.log('🖱️ Mobile menu button clicked');
-                try {
-                    if (typeof toggleMobileMenu === 'function') {
-                        console.log('✅ toggleMobileMenu function found, calling...');
-                        toggleMobileMenu();
-                    } else {
-                        console.error('❌ toggleMobileMenu is not a function:', typeof toggleMobileMenu);
-                    }
-                } catch (error) {
-                    console.error('🚨 Error in handleMobileMenuClick:', error);
-                    console.error('🚨 Available functions:', Object.keys(window).filter(key => typeof window[key] === 'function' && key.includes('Menu')));
-                }
-            };
+            // handleMobileMenuClick function removed - using toggleMobileMenu directly
 
             // Verify function is defined immediately
             console.log('toggleMobileMenu function defined:', typeof toggleMobileMenu);
