@@ -839,16 +839,25 @@
         function toggleMobileMenu() {
             const dropdown = document.getElementById('mobile-nav-dropdown');
             if (dropdown) {
-                const isHidden = dropdown.style.display === 'none' || dropdown.style.display === '';
-                dropdown.style.display = isHidden ? 'block' : 'none';
+                // Get computed style to check actual display value
+                const computedStyle = window.getComputedStyle(dropdown);
+                const isCurrentlyHidden = dropdown.style.display === 'none' || 
+                                        dropdown.style.display === '' ||
+                                        computedStyle.display === 'none';
+                
+                dropdown.style.display = isCurrentlyHidden ? 'block' : 'none';
                 
                 // Update button text/icon to indicate state
                 const toggleButton = document.querySelector('.mobile-menu-toggle');
                 if (toggleButton) {
-                    toggleButton.textContent = isHidden ? '✕' : '☰';
+                    toggleButton.textContent = isCurrentlyHidden ? '✕' : '☰';
                 }
                 
-                console.log('Mobile menu toggled:', isHidden ? 'opened' : 'closed');
+                console.log('Mobile menu toggled:', isCurrentlyHidden ? 'opened' : 'closed', {
+                    dropdownId: dropdown.id,
+                    styleDisplay: dropdown.style.display,
+                    computedDisplay: computedStyle.display
+                });
             } else {
                 console.error('Mobile dropdown element not found');
             }
