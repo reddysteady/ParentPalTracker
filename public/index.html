@@ -310,8 +310,86 @@
             flex-wrap: wrap;
         }
 
+        /* Mobile Navigation Styles */
+        .mobile-nav {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .mobile-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .mobile-nav-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+
+        .mobile-menu-toggle {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .mobile-nav-dropdown {
+            border-top: 1px solid #e1e8ed;
+            background: #f8f9fa;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            border-bottom: 1px solid #e1e8ed;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .mobile-nav-item:hover {
+            background: #e9ecef;
+        }
+
+        .mobile-nav-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .mobile-nav-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Desktop Navigation */
+        .desktop-nav {
+            display: flex;
+        }
+
         /* Mobile responsive styles */
         @media (max-width: 768px) {
+            .desktop-nav {
+                display: none !important;
+            }
+
+            .mobile-nav {
+                display: block !important;
+            }
+
             .desktop-buttons {
                 display: none !important;
             }
@@ -332,6 +410,14 @@
 
         /* Desktop styles */
         @media (min-width: 769px) {
+            .mobile-nav {
+                display: none !important;
+            }
+
+            .desktop-nav {
+                display: flex !important;
+            }
+
             .mobile-action-dropdown {
                 display: none !important;
             }
@@ -368,13 +454,29 @@
     </header>
 
     <div class="container">
-        <nav class="nav-tabs">
+        <!-- Desktop Navigation -->
+        <nav class="nav-tabs desktop-nav">
             <button class="nav-tab active" onclick="showTab('dashboard')">Dashboard</button>
             <button class="nav-tab" onclick="showTab('children')">Children</button>
             <button class="nav-tab" onclick="showTab('events')">Events</button>
             <button class="nav-tab" onclick="showTab('gmail')">Gmail Integration</button>
             <button class="nav-tab" onclick="showTab('settings')">Settings</button>
         </nav>
+
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav">
+            <div class="mobile-nav-header">
+                <h2 id="current-page-title">Dashboard</h2>
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            </div>
+            <div class="mobile-nav-dropdown" id="mobile-nav-dropdown" style="display: none;">
+                <button class="mobile-nav-item active" onclick="selectMobileTab('dashboard', 'Dashboard')">Dashboard</button>
+                <button class="mobile-nav-item" onclick="selectMobileTab('children', 'Children')">Children</button>
+                <button class="mobile-nav-item" onclick="selectMobileTab('events', 'Events')">Events</button>
+                <button class="mobile-nav-item" onclick="selectMobileTab('gmail', 'Gmail Integration')">Gmail Integration</button>
+                <button class="mobile-nav-item" onclick="selectMobileTab('settings', 'Settings')">Settings</button>
+            </div>
+        </div></nav>
 
         <!-- Dashboard Tab -->
         <div id="dashboard" class="tab-content active">
@@ -695,7 +797,7 @@
                 }
             });
 
-            // Remove active class from all tabs
+            // Remove active class from all desktop tab buttons
             const tabButtons = document.querySelectorAll('.nav-tab');
             tabButtons.forEach(button => {
                 if (button && button.classList) {
@@ -709,11 +811,14 @@
                 selectedTab.classList.add('active');
             }
 
-            // Add active class to clicked button
+            // Add active class to clicked desktop button
             const activeButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
             if (activeButton && activeButton.classList) {
                 activeButton.classList.add('active');
             }
+
+            // Update mobile navigation state
+            updateMobileNavState(tabName);
 
             // Load tab-specific data
             if (tabName === 'gmail') {
@@ -727,6 +832,70 @@
                 loadDashboard();
             } else if (tabName === 'children') {
                 loadChildren();
+            }
+        }
+
+        // Mobile navigation functions
+        function toggleMobileMenu() {
+            const dropdown = document.getElementById('mobile-nav-dropdown');
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function selectMobileTab(tabName, displayName) {
+            // Update the page title
+            const pageTitle = document.getElementById('current-page-title');
+            if (pageTitle) {
+                pageTitle.textContent = displayName;
+            }
+
+            // Remove active class from all mobile nav items
+            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+            mobileNavItems.forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Add active class to selected mobile nav item
+            const activeItem = document.querySelector(`[onclick="selectMobileTab('${tabName}', '${displayName}')"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+
+            // Close the dropdown
+            const dropdown = document.getElementById('mobile-nav-dropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+
+            // Show the selected tab content
+            showTab(tabName);
+        }
+
+        // Update mobile nav when desktop tabs are clicked
+        function updateMobileNavState(tabName) {
+            const tabNameToDisplay = {
+                'dashboard': 'Dashboard',
+                'children': 'Children', 
+                'events': 'Events',
+                'gmail': 'Gmail Integration',
+                'settings': 'Settings'
+            };
+
+            const pageTitle = document.getElementById('current-page-title');
+            if (pageTitle && tabNameToDisplay[tabName]) {
+                pageTitle.textContent = tabNameToDisplay[tabName];
+            }
+
+            // Update mobile nav active state
+            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+            mobileNavItems.forEach(item => {
+                item.classList.remove('active');
+            });
+
+            const mobileActiveItem = document.querySelector(`[onclick*="selectMobileTab('${tabName}'"]`);
+            if (mobileActiveItem) {
+                mobileActiveItem.classList.add('active');
             }
         }
 
@@ -1819,6 +1988,9 @@
             const urlParams = new URLSearchParams(window.location.hash.substring(1));
             const currentTab = urlParams.get('tab') || localStorage.getItem('currentTab') || 'dashboard';
             showTab(currentTab);
+            
+            // Update mobile navigation state
+            updateMobileNavState(currentTab);
 
             // Check Gmail connection status
             checkGmailConnection();
