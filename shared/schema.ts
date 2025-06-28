@@ -36,7 +36,7 @@ export const emails = pgTable('emails', {
   body: text('body'),
   sender: text('sender'),
   receivedAt: timestamp('received_at').notNull(),
-  gmailMessageId: text('gmail_message_id'),
+  gmailMessageId: text('gmail_message_id').unique(), // Prevent duplicate emails
   createdAt: timestamp('created_at').defaultNow()
 });
 
