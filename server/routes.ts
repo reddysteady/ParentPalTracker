@@ -351,58 +351,101 @@ router.post('/api/gmail/sync/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
 
-    console.log('Starting Gmail sync for user:', userId);
+    console.log('🚀 [API Route] Gmail sync endpoint called');
+    console.log('🚀 [API Route] User ID:', userId);
+    console.log('🚀 [API Route] Request timestamp:', new Date().toISOString());
 
     const { tokens } = req.body;
 
-    console.log('📧 Gmail sync request for user:', userId);
-    console.log('📧 Tokens provided:', !!tokens);
+    console.log('🔐 [API Route] Token validation:', {
+      tokensProvided: !!tokens,
+      hasAccessToken: !!(tokens?.access_token),
+      accessTokenLength: tokens?.access_token?.length || 0,
+      hasRefreshToken: !!(tokens?.refresh_token),
+      tokenType: tokens?.token_type,
+      scope: tokens?.scope
+    });
 
     if (!tokens || !tokens.access_token) {
-      console.log('❌ No valid Gmail tokens provided');
+      console.log('❌ [API Route] Invalid tokens - rejecting request');
       return res.status(400).json({ error: 'Valid Gmail tokens required - please connect Gmail first' });
     }
 
     // Validate environment variables
+    console.log('⚙️ [API Route] Environment validation:', {
+      hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+      hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+      hasRedirectUri: !!process.env.GOOGLE_REDIRECT_URI
+    });
+
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-      console.log('❌ Missing Gmail OAuth credentials');
+      console.log('❌ [API Route] Missing OAuth credentials');
       return res.status(500).json({ error: 'Gmail integration not configured - missing credentials' });
     }
 
-    console.log('📧 Creating Gmail service...');
+    console.log('📧 [API Route] Creating Gmail service instance...');
     const gmailService = createGmailService();
 
     // Set tokens and validate them
+    console.log('🔐 [API Route] Setting tokens on Gmail service...');
     gmailService.setTokens(tokens);
 
-    console.log('📧 Processing unread emails...');
+    console.log('📧 [API Route] Starting unread emails processing...');
+    console.log('📧 [API Route] This will fetch REAL emails from Gmail API, not mock data');
+    
     // Process unread emails using actual Gmail service
     const result = await gmailService.processUnreadEmails(userId);
 
-    console.log('📧 Gmail sync completed:', result);
+    console.log('✅ [API Route] Gmail sync processing completed:', {
+      processed: result.processed,
+      errors: result.errors,
+      totalAttempted: result.processed + result.errors,
+      successRate: result.processed + result.errors > 0 ? Math.round((result.processed / (result.processed + result.errors)) * 100) : 0,
+      isRealGmailData: true
+    });
+
+    // Check current email count in database
+    const allEmails = await db.select().from(emails).where(eq(emails.userId, userId));
+    console.log('📊 [API Route] Database summary after sync:', {
+      totalEmailsInDB: allEmails.length,
+      newlyProcessed: result.processed,
+      processingErrors: result.errors
+    });
 
     res.json({ 
       success: true, 
       processed: result.processed,
       errors: result.errors,
-      message: `Processed ${result.processed} emails${result.errors > 0 ? `, ${result.errors} errors` : ''}`
+      totalEmails: allEmails.length,
+      message: `Processed ${result.processed} real Gmail emails${result.errors > 0 ? `, ${result.errors} errors` : ''}`,
+      dataSource: 'Gmail API',
+      isRealData: true
     });
   } catch (error: any) {
-    console.error('❌ Error syncing Gmail:', error);
+    console.error('💥 [API Route] Critical error in Gmail sync:', {
+      errorMessage: error.message,
+      errorStack: error.stack,
+      errorCode: error.code,
+      timestamp: new Date().toISOString()
+    });
 
     // Check if error is due to token expiration or authentication issues
     if (error.message?.includes('invalid_grant') || 
         error.message?.includes('Token has been expired') ||
         error.message?.includes('authentication failed') ||
         error.code === 401) {
+      console.log('🔐 [API Route] Authentication error detected - tokens expired');
       res.status(401).json({ 
         error: 'Gmail authentication failed - please reconnect your Gmail account',
-        expired: true
+        expired: true,
+        errorType: 'authentication'
       });
     } else {
+      console.log('💥 [API Route] Non-authentication error');
       res.status(500).json({ 
         error: 'Failed to sync Gmail: ' + error.message,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        errorType: 'processing'
       });
     }
   }

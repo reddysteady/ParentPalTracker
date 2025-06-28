@@ -821,62 +821,76 @@
 
         // Load email list
         async function loadEmailList() {
-            const emailList = document.getElementById('emailList');
-            if (!emailList) return;
-
             try {
-                emailList.innerHTML = '<div class="loading">Loading emails...</div>';
-
-                const response = await fetch('/api/emails');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch emails');
-                }
-
+                const response = await fetch('/api/emails/1');
                 const emails = await response.json();
-                console.log('Loaded emails:', emails.length);
-                console.log('Sample email structure:', emails[0]);
 
+                console.log('Loaded emails:', emails.length, 'emails for user', 1);
+
+                const emailList = document.getElementById('emailList');
                 if (emails.length === 0) {
-                    emailList.innerHTML = '<div class="loading">No emails synced yet. Click "Sync Emails" to get started.</div>';
+                    emailList.innerHTML = '<div class="loading">No emails found. Click "Sync Emails" to get started.</div>';
                     return;
                 }
 
-                // Create table for emails
-                emailList.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
-                                <th style="padding: 12px; text-align: left;">Sender</th>
-                                <th style="padding: 12px; text-align: left;">Subject</th>
-                                <th style="padding: 12px; text-align: left;">Date</th>
-                                <th style="padding: 12px; text-align: left;">Status</th>
-                                <th style="padding: 12px; text-align: left;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${emails.map(email => `
-                                <tr style="border-bottom: 1px solid #eee;">
-                                    <td style="padding: 12px;">${email.sender || 'Unknown'}</td>
-                                    <td style="padding: 12px;">${email.subject}</td>
-                                    <td style="padding: 12px;">${new Date(email.receivedAt).toLocaleDateString()}</td>
-                                    <td style="padding: 12px;">
-                                        <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
-                                            Synced
-                                        </span>
-                                    </td>
-                                    <td style="padding: 12px;">
-                                        <button onclick="viewEmail(${email.id})" style="background: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 5px;">View</button>
-                                        <button onclick="deleteEmail(${email.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<thead><tr style="background-color: #f5f5f5; border-bottom: 2px solid #ddd;">';
+                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Data Source</th>';
+                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Sender</th>';
+                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Subject</th>';
+                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Date</th>';
+                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>';
+                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Event</th>';
+                html += '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Actions</th>';
+                html += '</tr></thead><tbody>';
+
+                emails.forEach(email => {
+                    const date = new Date(email.receivedAt).toLocaleDateString();
+                    const eventIcon = email.hasEvent ? '📅' : '📄';
+                    const eventTooltip = email.hasEvent ? 'Event extracted' : 'No event found';
+
+                    // Determine data source indicator
+                    const isRealEmail = email.gmailMessageId && email.gmailMessageId.length > 10;
+                    const dataSourceIcon = isRealEmail ? '📡' : '🧪';
+                    const dataSourceText = isRealEmail ? 'Gmail API' : 'Mock Data';
+                    const dataSourceColor = isRealEmail ? '#28a745' : '#ffc107';
+                    const dataSourceTooltip = isRealEmail ? 'Real email from Gmail API' : 'Mock/test data';
+
+                    html += `<tr style="border-bottom: 1px solid #eee;">`;
+                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;" title="${dataSourceTooltip}">`;
+                    html += `<span style="color: ${dataSourceColor}; font-weight: bold;">${dataSourceIcon} ${dataSourceText}</span>`;
+                    html += `</td>`;
+                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">${email.sender}</td>`;
+                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${email.subject}</td>`;
+                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">${date}</td>`;
+                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee;"><span style="color: #28a745;">✓ Synced</span></td>`;
+                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;" title="${eventTooltip}">${eventIcon}</td>`;
+                    html += `<td style="padding: 12px; border-bottom: 1px solid #eee;">`;
+                    html += `<button onclick="deleteEmail(${email.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">🗑️ Delete</button>`;
+                    html += `</td>`;
+                    html += `</tr>`;
+                });
+
+                html += '</tbody></table>';
+
+                // Add summary stats
+                const realEmails = emails.filter(email => email.gmailMessageId && email.gmailMessageId.length > 10);
+                const mockEmails = emails.length - realEmails.length;
+
+                const statsHtml = `
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 14px;">
+                        <strong>Data Summary:</strong> 
+                        📡 ${realEmails.length} real Gmail emails, 
+                        🧪 ${mockEmails} mock/test emails
+                        ${mockEmails > 0 ? ' <span style="color: #ffc107;">⚠️ Mock data detected</span>' : ' ✅ All real data'}
+                    </div>
                 `;
 
+                emailList.innerHTML = html + statsHtml;
+
             } catch (error) {
-                console.error('Error loading email list:', error);
-                emailList.innerHTML = `<div style="color: #dc3545; text-align: center; padding: 20px;">Error loading emails: ${error.message}<br>Please check console for details.</div>`;
+                console.error('Error loading emails:', error);
+                document.getElementById('emailList').innerHTML = '<div class="error">Error loading emails</div>';
             }
         }
 
@@ -928,27 +942,34 @@
         }
 
         async function syncGmail() {
-            const gmailTokens = JSON.parse(localStorage.getItem('gmailTokens') || '{}');
-            if (!gmailTokens.access_token) {
+            const tokens = localStorage.getItem('gmailTokens');
+            if (!tokens) {
                 alert('Please connect Gmail first');
                 return;
             }
 
+            updateStatus('🔄 Syncing emails from Gmail API (Real Data)...');
+            console.log('Syncing emails...');
+
+            // Add visual indicator for real data processing
+            const statusElement = document.getElementById('sync-status');
+            if (statusElement) {
+                statusElement.innerHTML += '<br><small style="color: #28a745;">📡 Fetching real emails from your Gmail account</small>';
+            }
+
             try {
-                updateStatus('Syncing emails...');
                 const response = await fetch('/api/gmail/sync/1', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tokens: gmailTokens })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tokens: JSON.parse(tokens) })
                 });
 
                 if (!response.ok) {
                     const errorResult = await response.json();
-                    if (errorResult.expired) {
-                        localStorage.removeItem('gmailTokens');
-                        checkGmailConnection(); // Update UI to show disconnected state
-                        updateStatus('✗ Gmail connection expired');
-                        alert('Your Gmail connection has expired. Please reconnect Gmail to continue syncing emails.');
+                    if (response.status === 401 && errorResult.expired) {
+                        updateStatus('✗ Gmail authentication expired. Please reconnect your Gmail to continue syncing emails.');
                         return;
                     } else {
                         updateStatus(`✗ Error: ${errorResult.error || 'Sync failed'}`);
@@ -959,12 +980,34 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    updateStatus(`✓ ${result.message}`);
+                    let statusMessage = `✓ ${result.message}`;
+
+                    // Add duplicate handling feedback
+                    if (result.duplicates && result.duplicates > 0) {
+                        statusMessage += ` (${result.duplicates} duplicates skipped)`;
+                    }
+
+                    // Emphasize real data source
+                    statusMessage += ' - 📡 Real Gmail data processed';
+
+                    updateStatus(statusMessage);
                     await loadEmailList();
 
                     // Update statistics
                     document.getElementById('emails-processed').textContent = result.processed || 0;
                     document.getElementById('last-sync').textContent = new Date().toLocaleString();
+
+                    // Show real data confirmation
+                    const emailList = document.getElementById('emailList');
+                    if (emailList && result.processed > 0) {
+                        const realDataBanner = document.createElement('div');
+                        realDataBanner.style.cssText = 'background: #d4edda; border: 1px solid #c3e6cb; padding: 8px; margin: 10px 0; border-radius: 4px; color: #155724; font-size: 14px;';
+                        realDataBanner.innerHTML = '✅ <strong>Real Data:</strong> These emails were fetched from your actual Gmail account via Gmail API';
+                        emailList.insertBefore(realDataBanner, emailList.firstChild);
+
+                        // Remove banner after 10 seconds
+                        setTimeout(() => realDataBanner.remove(), 10000);
+                    }
                 } else {
                     updateStatus(`✗ Error: ${result.error}`);
                     console.error('Sync failed:', result);

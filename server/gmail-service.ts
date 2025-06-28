@@ -1,4 +1,3 @@
-
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { processIncomingEmail, IncomingEmail } from './email-service';
@@ -69,7 +68,7 @@ export class GmailIntegration {
    */
   setTokens(tokens: any) {
     this.oauth2Client.setCredentials(tokens);
-    
+
     // Set up automatic token refresh
     this.oauth2Client.on('tokens', (newTokens) => {
       if (newTokens.refresh_token) {
@@ -81,7 +80,7 @@ export class GmailIntegration {
         // In production, save the new access token to database
       }
     });
-    
+
     this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
   }
 
@@ -107,7 +106,7 @@ export class GmailIntegration {
     if (userId && !query) {
       const { storage } = await import('./storage');
       const user = await storage.getUser(userId);
-      
+
       if (user?.schoolDomains && user.schoolDomains.length > 0) {
         // Build query for specific domains
         const domainQueries = user.schoolDomains.map(domain => `from:*@${domain}`).join(' OR ');
@@ -123,35 +122,71 @@ export class GmailIntegration {
       query = 'is:unread from:(*@*.edu OR *@*.k12.* OR *@school*)';
     }
     try {
+      console.log('📧 [Gmail API] Initializing Gmail API connection...');
+      console.log('📧 [Gmail API] Auth client configured:', {
+        hasGmailService: !!this.gmail,
+        hasOAuth2Client: !!this.oauth2Client
+      });
+
       let response;
       try {
+        console.log('📧 [Gmail API] Making initial API call to list messages...');
+        console.log('📧 [Gmail API] Request parameters:', {
+          userId: 'me',
+          query: query,
+          maxResults: 20
+        });
+
         response = await this.gmail.users.messages.list({
           userId: 'me',
           q: query,
           maxResults: 20
         });
+
+        console.log('📧 [Gmail API] Initial API call successful');
+        console.log('📧 [Gmail API] Response summary:', {
+          hasMessages: !!response.data.messages,
+          messageCount: response.data.messages?.length || 0,
+          resultSizeEstimate: response.data.resultSizeEstimate
+        });
+
       } catch (authError: any) {
+        console.log('❌ [Gmail API] Authentication error on initial call:', {
+          code: authError.code,
+          message: authError.message,
+          status: authError.status
+        });
+
         if (authError.code === 401 || authError.message?.includes('invalid authentication')) {
-          console.log('🔄 Access token expired, attempting refresh...');
+          console.log('🔄 [Gmail API] Access token expired, attempting refresh...');
           await this.refreshTokens();
+          console.log('🔄 [Gmail API] Token refreshed, retrying API call...');
+
           // Retry the request with refreshed tokens
           response = await this.gmail.users.messages.list({
             userId: 'me',
             q: query,
             maxResults: 20
           });
+
+          console.log('✅ [Gmail API] Retry successful after token refresh');
         } else {
           throw authError;
         }
       }
 
       if (!response.data.messages) {
+        console.log('📧 [Gmail API] No messages found matching query');
         return [];
       }
 
+      console.log(`📧 [Gmail API] Found ${response.data.messages.length} messages, fetching details...`);
+
       // Get full message details for each email
       const emails = await Promise.all(
-        response.data.messages.map(async (message: any) => {
+        response.data.messages.map(async (message: any, index: number) => {
+          console.log(`📧 [Gmail API] Fetching details for message ${index + 1}/${response.data.messages.length} (ID: ${message.id})`);
+
           let fullMessage;
           try {
             fullMessage = await this.gmail.users.messages.get({
@@ -159,24 +194,47 @@ export class GmailIntegration {
               id: message.id,
               format: 'full'
             });
+
+            console.log(`📧 [Gmail API] Successfully fetched message ${index + 1} details`);
+
           } catch (authError: any) {
+            console.log(`❌ [Gmail API] Auth error fetching message ${index + 1}:`, {
+              code: authError.code,
+              message: authError.message
+            });
+
             if (authError.code === 401 || authError.message?.includes('invalid authentication')) {
-              console.log('🔄 Token expired, refreshing for message retrieval...');
+              console.log(`🔄 [Gmail API] Token expired, refreshing for message ${index + 1} retrieval...`);
               await this.refreshTokens();
+
               fullMessage = await this.gmail.users.messages.get({
                 userId: 'me',
                 id: message.id,
                 format: 'full'
               });
+
+              console.log(`✅ [Gmail API] Successfully fetched message ${index + 1} after token refresh`);
             } else {
               throw authError;
             }
           }
-          return this.parseGmailMessage(fullMessage.data);
+
+          const parsedEmail = this.parseGmailMessage(fullMessage.data);
+          console.log(`📧 [Gmail API] Parsed message ${index + 1}:`, {
+            hasEmail: !!parsedEmail,
+            subject: parsedEmail?.subject?.substring(0, 50) + '...',
+            from: parsedEmail?.from,
+            bodyLength: parsedEmail?.body?.length || 0
+          });
+
+          return parsedEmail;
         })
       );
 
-      return emails.filter(email => email !== null);
+      const validEmails = emails.filter(email => email !== null);
+      console.log(`📧 [Gmail API] Processing complete: ${validEmails.length}/${emails.length} emails successfully parsed`);
+
+      return validEmails;
     } catch (error: any) {
       console.error('❌ Error searching Gmail:', {
         message: error.message,
@@ -184,12 +242,12 @@ export class GmailIntegration {
         status: error.status,
         details: error.response?.data
       });
-      
+
       // Check for common authentication errors
       if (error.code === 401 || error.message?.includes('invalid_grant') || error.message?.includes('unauthorized')) {
         throw new Error('Gmail authentication failed - tokens may be expired or invalid');
       }
-      
+
       throw error;
     }
   }
@@ -349,9 +407,9 @@ export class GmailIntegration {
    */
   startEmailMonitoring(userId: number, intervalMinutes: number = 5) {
     const interval = intervalMinutes * 60 * 1000;
-    
+
     console.log(`Starting Gmail monitoring for user ${userId} every ${intervalMinutes} minutes`);
-    
+
     setInterval(async () => {
       try {
         const result = await this.processUnreadEmails(userId);
