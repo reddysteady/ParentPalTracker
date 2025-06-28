@@ -349,6 +349,10 @@
             .mobile-nav-dropdown {
                 border-top: 1px solid #e1e8ed;
                 background: #f8f9fa;
+                /* Debug: ensure dropdown is visible when shown */
+                min-height: 200px;
+                overflow: visible;
+                z-index: 1000;
             }
 
             .mobile-nav-item {
@@ -1169,15 +1173,26 @@
                     console.log('Elements found:', {
                         dropdown: !!dropdown,
                         toggleButton: !!toggleButton,
-                        dropdownDisplay: dropdown?.style.display
+                        dropdownDisplay: dropdown?.style.display,
+                        dropdownOffsetHeight: dropdown?.offsetHeight,
+                        buttonText: toggleButton?.textContent
                     });
                     
                     if (!dropdown) {
-                        console.error('Mobile dropdown element not found');
+                        console.error('Mobile dropdown element not found - checking all mobile elements:', {
+                            byId: document.getElementById('mobile-nav-dropdown'),
+                            byClass: document.querySelector('.mobile-nav-dropdown'),
+                            allMobileElements: Array.from(document.querySelectorAll('[id*="mobile"], [class*="mobile"]')).map(el => ({
+                                tag: el.tagName,
+                                id: el.id,
+                                className: el.className
+                            }))
+                        });
                         return;
                     }
 
                     const isCurrentlyVisible = dropdown.style.display === 'block';
+                    console.log('Current state:', { isCurrentlyVisible, computedDisplay: window.getComputedStyle(dropdown).display });
 
                     if (isCurrentlyVisible) {
                         dropdown.style.display = 'none';
@@ -1192,10 +1207,11 @@
                             toggleButton.textContent = '✕';
                             toggleButton.setAttribute('aria-expanded', 'true');
                         }
-                        console.log('Mobile menu opened');
+                        console.log('Mobile menu opened - dropdown height:', dropdown.offsetHeight);
                     }
                 } catch (error) {
                     console.error('Error in toggleMobileMenu:', error);
+                    console.error('Stack trace:', error.stack);
                 }
             }
 
@@ -2409,28 +2425,53 @@
                 }
 
                 if (toggleButton) {
+                    console.log('Mobile toggle button found:', toggleButton);
                     toggleButton.setAttribute('aria-expanded', 'false');
                     // Remove any existing onclick and add event listener
                     toggleButton.removeAttribute('onclick');
+                    
+                    // Test if the button is clickable
+                    toggleButton.style.cursor = 'pointer';
+                    toggleButton.style.pointerEvents = 'auto';
+                    
                     toggleButton.addEventListener('click', function(e) {
                         e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🍔 Mobile toggle button clicked!');
                         toggleMobileMenu();
                     });
+                    
+                    // Add touchstart for mobile devices
+                    toggleButton.addEventListener('touchstart', function(e) {
+                        console.log('📱 Mobile toggle button touched!');
+                    });
+                    
                     console.log('Mobile menu toggle event listener attached');
                 } else {
-                    console.error('Mobile menu toggle button not found');
+                    console.error('Mobile menu toggle button not found - ID:', 'mobile-menu-toggle-btn');
+                    console.log('Available elements with mobile-menu classes:', 
+                        document.querySelectorAll('[class*="mobile-menu"]'));
                 }
 
                 // Add event listeners to mobile nav items
                 const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-                mobileNavItems.forEach(item => {
+                console.log('Found mobile nav items for event binding:', mobileNavItems.length);
+                
+                mobileNavItems.forEach((item, index) => {
                     const tabName = item.dataset.tab;
                     const displayName = item.dataset.display;
+                    console.log(`Binding item ${index}:`, { tabName, displayName });
+                    
                     if (tabName && displayName) {
                         item.addEventListener('click', function(e) {
                             e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Mobile nav item clicked:', { tabName, displayName });
                             selectMobileTab(tabName, displayName);
                         });
+                        console.log(`Event listener attached to mobile nav item: ${displayName}`);
+                    } else {
+                        console.warn('Mobile nav item missing data attributes:', item);
                     }
                 });
                 console.log('Mobile nav item event listeners attached to', mobileNavItems.length, 'items');
