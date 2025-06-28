@@ -1156,6 +1156,7 @@
         <script>
             // Define mobile navigation functions FIRST to ensure global availability
             function toggleMobileMenu() {
+                console.log('toggleMobileMenu called');
                 try {
                     const dropdown = document.getElementById('mobile-nav-dropdown');
                     const toggleButton = document.querySelector('.mobile-menu-toggle');
@@ -1188,6 +1189,12 @@
                     console.error('Error toggling mobile menu:', error);
                 }
             }
+
+            // Verify function is defined immediately
+            console.log('toggleMobileMenu function defined:', typeof toggleMobileMenu);
+            
+            // Also define as a backup method
+            window.toggleMobileMenu = toggleMobileMenu;
 
             function selectMobileTab(tabName, displayName) {
                 try {
@@ -1309,6 +1316,13 @@
             window.toggleMobileMenu = toggleMobileMenu;
             window.selectMobileTab = selectMobileTab;
             window.showTab = showTab;
+            
+            // Debug verification of global functions
+            console.log('Global functions check:', {
+                toggleMobileMenu: typeof window.toggleMobileMenu,
+                selectMobileTab: typeof window.selectMobileTab,
+                showTab: typeof window.showTab
+            });
 
             // Global state variables
             let currentUser = null;
@@ -2392,6 +2406,14 @@
             document.addEventListener('DOMContentLoaded', function() {
                 console.log('DOM loaded, initializing app...');
 
+                // Verify mobile functions are accessible after DOM load
+                console.log('Post-DOM mobile functions check:', {
+                    toggleMobileMenu: typeof window.toggleMobileMenu,
+                    selectMobileTab: typeof window.selectMobileTab,
+                    showTab: typeof window.showTab,
+                    inlineHandler: typeof toggleMobileMenu
+                });
+
                 // Initialize mobile menu state
                 const dropdown = document.getElementById('mobile-nav-dropdown');
                 const toggleButton = document.querySelector('.mobile-menu-toggle');
@@ -2402,6 +2424,8 @@
 
                 if (toggleButton) {
                     toggleButton.setAttribute('aria-expanded', 'false');
+                    // Test if onclick handler can find the function
+                    console.log('Toggle button onclick:', toggleButton.getAttribute('onclick'));
                 }
 
                 // Only clear invalid cached tokens (not all tokens)
