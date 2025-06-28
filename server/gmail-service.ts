@@ -111,12 +111,12 @@ export class GmailIntegration {
       if (user?.schoolDomains && user.schoolDomains.length > 0) {
         // Build query for specific domains
         const domainQueries = user.schoolDomains.map(domain => `from:*@${domain}`).join(' OR ');
-        query = `is:unread (${domainQueries}) -from:*@birds.cornell.edu -from:*@schoolstart.ca`;
+        query = `is:unread (${domainQueries})`;
         console.log(`Searching emails from configured domains: ${user.schoolDomains.join(', ')}`);
       } else {
-        // Enhanced default query for real school domains, excluding promotional/newsletter content
-        query = 'is:unread from:(*@*.edu OR *@*.k12.* OR *@*school*.* OR *@*district*.* OR teacher* OR principal* OR admin*) -from:*@birds.cornell.edu -from:*@schoolstart.ca -from:*newsletter* -from:*marketing*';
-        console.log('No domains configured, using enhanced school email patterns with exclusions');
+        // Default query for common school domains
+        query = 'is:unread from:(*@*.edu OR *@*.k12.* OR *@school*)';
+        console.log('No domains configured, using default school email patterns');
       }
     } else if (!query) {
       // Fallback to default
